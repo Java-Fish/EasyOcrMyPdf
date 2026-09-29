@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Build-Ergebnisse
+build/
+dist/
+*.spec.bak
+
+# Mitgelieferte Binaries (werden mit tools/vendor_*.py erzeugt)
+vendor/macos/
+vendor/windows/
+vendor/linux/
+
+# Erzeugte Symbole
+resources/icon.icns
+resources/icon.ico
+resources/icon.iconset/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
