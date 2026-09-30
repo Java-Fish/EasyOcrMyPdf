@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=OCRmyPDF GUI
+GenericName=OCR for PDF files
+Comment=PDFs durchsuchbar machen, ganz ohne Kommandozeile
+Comment[en]=Make PDFs searchable, no command line needed
+Exec=ocrmypdf-gui %F
+Icon=ocrmypdf-gui
+Terminal=false
+Categories=Office;Graphics;Scanning;
+MimeType=application/pdf;
+Keywords=OCR;PDF;Scan;Texterkennung;Tesseract;
+StartupWMClass=ocrmypdf-gui

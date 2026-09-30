@@ -11,8 +11,8 @@ durchsuchbar, per Doppelklick gestartet und ganz ohne Kommandozeile.
 - PDF-Dateien per Ziehen-und-Ablegen oder über den Dateidialog einlesen (nur PDF)
 - Mehrere Dateien nacheinander abarbeiten, mit Fortschrittsanzeige je Seite
 - Ausgabe als PDF, PDF/A, PDF/A-1b, PDF/A-2b oder PDF/A-3b
-- Texterkennung in jeder Sprache, für die ein Tesseract-Sprachpaket installiert
-  ist, auch mehrere gleichzeitig
+- Texterkennung in Deutsch und Englisch ab Werk, rund 120 weitere Sprachen
+  direkt in der Anwendung nachladbar, auch mehrere gleichzeitig
 - Speichern in einen festen Ordner oder in einen Unterordner neben dem Original
 - Oberfläche auf Deutsch und Englisch
 - Originaldateien bleiben unverändert
@@ -59,12 +59,25 @@ haben. Sie brauchen weder Python noch sonst eine Vorinstallation.
 Wer nichts installieren möchte, nimmt stattdessen das ZIP-Archiv, entpackt es an
 einen beliebigen Ort und startet darin `OCRmyPDF GUI.exe`.
 
+### Linux
+
+1. Die Datei `OCRmyPDF-GUI-x86_64.AppImage` herunterladen.
+2. Einmalig ausführbar machen, entweder im Dateimanager über
+   *Eigenschaften → Zugriffsrechte → Ausführen erlauben* oder im Terminal mit
+   `chmod +x OCRmyPDF-GUI-x86_64.AppImage`.
+3. Per Doppelklick starten.
+
+Alternativ gibt es ein `.tar.gz`. Es wird an einen beliebigen Ort entpackt und
+darin `ocrmypdf-gui` gestartet.
+
 ### In drei Schritten zur durchsuchbaren PDF
 
 1. **Dateien hineinziehen.** PDF-Dateien auf die gestrichelte Fläche ziehen oder
    daraufklicken, um sie auszuwählen.
 2. **Sprache prüfen.** Rechts unter *Sprache des OCR-Scans* muss die Sprache des
    Dokuments stehen. Das ist die einzige Einstellung, die wirklich zählt.
+   Mitgeliefert sind Deutsch und Englisch; weitere Sprachen lassen sich
+   [nachinstallieren](#sprache-des-ocr-scans).
 3. **Auf „OCR starten“ klicken.** Die fertigen Dateien landen in einem
    Unterordner `OCR` neben den Originalen. Die Originale bleiben unberührt.
 
@@ -121,10 +134,33 @@ Dieser Abschnitt erklärt, was dabei im Hintergrund passiert.
 | macOS | `/Programme/OCRmyPDF GUI.app` | App in den Papierkorb ziehen |
 | Windows (Setup) | `C:\Program Files\OCRmyPDF GUI` | *Einstellungen → Apps → OCRmyPDF GUI* |
 | Windows (ZIP) | beliebiger Ordner | Ordner löschen |
+| Linux (AppImage) | beliebiger Ordner | Datei löschen |
+| Linux (tar.gz) | beliebiger Ordner | Ordner löschen |
 
 Die Einstellungen liegen getrennt davon im Benutzerprofil, siehe
 [Konfiguration](#6-konfiguration). Beim Entfernen der Anwendung bleiben sie
 erhalten; wer auch sie loswerden will, löscht die dort genannte Datei.
+
+### Download auf Unversehrtheit prüfen
+
+Zu jedem Build gehört eine Datei `sha.txt` mit den SHA-256-Prüfsummen. Damit
+lässt sich feststellen, ob eine heruntergeladene Datei vollständig und
+unverändert ist:
+
+```bash
+# macOS und Linux, im Ordner mit der Datei und sha.txt
+shasum -a 256 -c sha.txt
+```
+
+```powershell
+# Windows
+Get-FileHash .\OCRmyPDF-GUI-Setup.exe -Algorithm SHA256
+```
+
+Erwartet wird die Ausgabe `OK` beziehungsweise ein Wert, der mit dem Eintrag in
+`sha.txt` übereinstimmt. Das Programmbündel `OCRmyPDF GUI.app` ist ein Ordner
+und lässt sich nicht als einzelne Datei prüfen; sein Wert steht in `sha.txt` als
+Kommentar und wird mit `python tools/make_checksums.py` nachgerechnet.
 
 ### Warum die Sicherheitswarnungen erscheinen
 
@@ -198,10 +234,36 @@ Mehrere Sprachen lassen sich kombinieren (z. B. Deutsch **und** Englisch für
 Dokumente mit englischen Fachbegriffen). Jede zusätzliche Sprache verlängert
 die Verarbeitung spürbar; mehr als zwei sind selten sinnvoll.
 
-Die Liste zeigt genau die Sprachpakete, die auf dem Rechner installiert sind.
-Das fertige Paket bringt die 26 gängigen europäischen Sprachen mit; weitere
-lassen sich nachinstallieren (unter macOS: `brew install tesseract-lang`,
-unter Windows über das Tesseract-Installationsprogramm).
+**Weitere Sprachen nachladen**
+
+Die fertigen Pakete bringen Deutsch und Englisch mit. Über *Weitere Sprachen
+laden ...* in der Sprachauswahl holt die Anwendung jede der rund 120 weiteren
+Sprachen direkt aus dem offiziellen Projekt von Tesseract. Eine Installation
+von Hand oder über die Kommandozeile ist nicht nötig.
+
+![Die Sprachverwaltung](docs/sprachen-verwalten.png)
+
+Bei der **Modellqualität** stehen zwei Varianten zur Wahl:
+
+| | Größe je Sprache | Wofür |
+|---|---|---|
+| **Schnell** | 1 bis 4 MB | Die mitgelieferte Variante. Für saubere Scans ab 300 dpi völlig ausreichend und deutlich schneller. |
+| **Genau** | 4 bis 15 MB | Erkennt schwierige Vorlagen besser, etwa schwachen Kontrast oder ungewöhnliche Schriften. Braucht mehr Zeit und Platz. |
+
+Heruntergeladene Sprachen stehen sofort zur Auswahl. Über *Entfernen* lassen
+sie sich wieder löschen; mindestens eine Sprache bleibt immer erhalten.
+
+Die Dateien landen im Benutzerprofil, nicht im Programmordner:
+
+| System | Ort |
+|---|---|
+| macOS | `~/Library/Application Support/OCRmyPDF-GUI/tessdata` |
+| Windows | `%APPDATA%\OCRmyPDF-GUI\tessdata` |
+| Linux | `~/.config/OCRmyPDF-GUI/tessdata` |
+
+Beim ersten Download übernimmt die Anwendung die mitgelieferten Sprachen
+dorthin, denn der Ordner im Programmpaket ist schreibgeschützt. Eine
+Neuinstallation der Anwendung lässt die nachgeladenen Sprachen unberührt.
 
 ### Speicherort
 
@@ -319,9 +381,22 @@ auch deutlich mehr. Weniger Sprachen und eine niedrige Optimierungsstufe
 beschleunigen die Sache.
 
 **Eine Sprache fehlt in der Liste.**
-Das Sprachpaket ist nicht installiert. macOS: `brew install tesseract-lang`.
-Windows: im Tesseract-Installationsprogramm unter *Additional language data*
-nachinstallieren.
+Die fertigen Pakete enthalten nur Deutsch und Englisch. Alle weiteren Sprachen
+laden Sie direkt in der Anwendung nach: Sprachauswahl öffnen, dann *Weitere
+Sprachen laden ...*. Dafür wird einmalig eine Internetverbindung gebraucht.
+
+**„Keine Verbindung zum Server" beim Nachladen von Sprachen.**
+Die Sprachdateien kommen über HTTPS von `raw.githubusercontent.com`. In
+Firmennetzen blockiert das gelegentlich eine Firewall oder ein Proxy. Als
+Ausweichweg lassen sich die Dateien von Hand in den oben genannten
+`tessdata`-Ordner legen.
+
+**Die Anwendung startet unter Linux nicht und meldet etwas zu `xcb`.**
+Qt 6 braucht eine Systembibliothek, die auf schlanken Installationen fehlt:
+
+```bash
+sudo apt install libxcb-cursor0
+```
 
 **Genaue Fehlerursache finden.**
 *Protokoll anzeigen* aufklappen, *Alle Details anzeigen* ankreuzen und das
@@ -363,7 +438,7 @@ Ergebnis: `dist/OCRmyPDF GUI.app` und `dist/OCRmyPDF-GUI.dmg`.
 | Option | Wirkung |
 |---|---|
 | *(ohne)* | Schlankes Paket (172 MB). Tesseract und Ghostscript müssen auf dem Zielrechner installiert sein. |
-| `--vendor` | Liefert Tesseract, Ghostscript, pngquant und jbig2enc mit (293 MB, DMG 138 MB). Die App läuft ohne Vorinstallation. |
+| `--vendor` | Liefert Tesseract, Ghostscript, pngquant und jbig2enc mit (198 MB, DMG 91 MB). Die App läuft ohne Vorinstallation. |
 | `--dmg` | Erzeugt zusätzlich ein DMG mit Verknüpfung zum Programme-Ordner. |
 
 ### Windows: `.exe` und Installationsprogramm bauen
@@ -382,18 +457,49 @@ Ergebnis: `dist\OCRmyPDF GUI\OCRmyPDF GUI.exe` und `dist\OCRmyPDF-GUI-Setup.exe`
 und jbig2enc gibt es dort nicht als fertige Pakete. Die Optimierungsstufen
 *Stark* und *Maximal* bleiben dann gesperrt, alles Übrige funktioniert.
 
+### Linux: AppImage und Archiv bauen
+
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-deu ghostscript patchelf
+sudo apt install pngquant          # optional, für starke Größenoptimierung
+
+./packaging/build_linux.sh --vendor --appimage
+```
+
+Ergebnis: `dist/ocrmypdf-gui/` als Programmordner,
+`dist/OCRmyPDF-GUI-linux-x86_64.tar.gz` und
+`dist/OCRmyPDF-GUI-x86_64.AppImage`.
+
+Für die AppImage wird `appimagetool` gebraucht. Fehlt es, nennt das Skript den
+Bezugsweg und baut nur das Archiv:
+
+```bash
+wget -O ~/.local/bin/appimagetool \
+  https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+chmod +x ~/.local/bin/appimagetool
+```
+
+> **Zur Verträglichkeit:** Mitgelieferte Bibliotheken werden gegen die glibc des
+> Build-Rechners gebaut. Ein auf Ubuntu 24.04 erzeugtes Paket läuft deshalb
+> nicht zwangsläufig auf älteren Distributionen. Wer breit verteilen möchte,
+> baut auf einer möglichst alten Distribution oder lässt `--vendor` weg und
+> überlässt Tesseract und Ghostscript der Paketverwaltung.
+
 ### Paketgröße steuern
 
 Den größten Anteil haben die Sprachdateien von Tesseract. Voreingestellt sind
-die gängigen europäischen Sprachen:
+deshalb nur Deutsch und Englisch, damit das DMG unter den 100 MB bleibt, die
+Codeberg je Release-Datei zulässt:
 
 ```bash
-python tools/vendor_macos.py                  # 26 gängige Sprachen  (116 MB)
-python tools/vendor_macos.py --languages all  # alle 125 Sprachen    (363 MB)
-python tools/vendor_macos.py --languages deu,eng,osd  # nur diese     (39 MB)
+python tools/vendor_macos.py                        # Deutsch + Englisch  (39 MB)
+python tools/vendor_macos.py --languages european   # 26 europäische     (116 MB)
+python tools/vendor_macos.py --languages all        # alle installierten (363 MB)
+python tools/vendor_macos.py --languages deu,eng,fra,ita   # eigene Auswahl
 ```
 
-Unter Windows gilt dasselbe für `tools\vendor_windows.py`.
+Unter Windows und Linux gilt dasselbe für `tools\vendor_windows.py`
+beziehungsweise `tools/vendor_linux.py`.
 
 ### Signierung
 
@@ -419,12 +525,14 @@ OCRmyPDF-GUI/
 │   ├── languages.py            Klartextnamen der Tesseract-Sprachcodes
 │   ├── models.py               Einstellungen, Aufträge, Kommandozeilenaufbau
 │   ├── runner.py               Hintergrund-Thread, der OCRmyPDF ausführt
+│   ├── tessdata.py             Sprachdateien verwalten und nachladen
 │   └── ui/
 │       ├── main_window.py      Hauptfenster
 │       ├── drop_area.py        Ablagebereich für PDF-Dateien
 │       ├── file_list.py        Warteschlange mit Zustand je Datei
 │       ├── settings_panel.py   Grund- und erweiterte Einstellungen
 │       ├── language_dialog.py  Sprachauswahl mit Suche
+│       ├── download_dialog.py  Sprachen nachladen
 │       ├── setup_dialog.py     Einrichtungshilfe bei fehlenden Programmen
 │       ├── widgets.py          Wiederverwendbare Bausteine
 │       └── style.py            Farben und Stylesheet (hell und dunkel)
@@ -432,11 +540,15 @@ OCRmyPDF-GUI/
 │   ├── ocrmypdf_gui.spec       PyInstaller-Beschreibung
 │   ├── build_macos.sh          Build-Skript für macOS
 │   ├── build_windows.ps1       Build-Skript für Windows
+│   ├── build_linux.sh          Build-Skript für Linux
+│   ├── ocrmypdf-gui.desktop    Menüeintrag für Linux
 │   └── installer.iss           Inno-Setup-Beschreibung
 ├── tools/
 │   ├── make_icons.py           erzeugt icon.png/.icns/.ico
+│   ├── make_checksums.py       schreibt dist/sha.txt
 │   ├── vendor_macos.py         bündelt Tesseract & Co. für macOS
-│   └── vendor_windows.py       bündelt Tesseract & Co. für Windows
+│   ├── vendor_windows.py       bündelt Tesseract & Co. für Windows
+│   └── vendor_linux.py         bündelt Tesseract & Co. für Linux
 └── vendor/                     Ablage der mitgelieferten Binaries
 ```
 

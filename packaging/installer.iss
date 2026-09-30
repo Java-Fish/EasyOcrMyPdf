@@ -8,7 +8,7 @@
 ; (setzt voraus, dass build_windows.ps1 zuvor dist\OCRmyPDF GUI erzeugt hat)
 
 #define AppName "OCRmyPDF GUI"
-#define AppVersion "1.0.0"
+#define AppVersion "0.0.2"
 #define AppPublisher "OCRmyPDF GUI"
 #define AppExeName "OCRmyPDF GUI.exe"
 

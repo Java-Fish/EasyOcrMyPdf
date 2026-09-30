@@ -15,7 +15,8 @@ vendor/macos/
 vendor/windows/
 vendor/linux/
 
-# Erzeugte Symbole
+# Erzeugte Symbole (entstehen bei jedem Build durch tools/make_icons.py)
+resources/icon.png
 resources/icon.icns
 resources/icon.ico
 resources/icon.iconset/

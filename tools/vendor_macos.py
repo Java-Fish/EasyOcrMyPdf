@@ -4,9 +4,10 @@ Danach bringt die gebaute .app beide Programme selbst mit; der Nutzer muss
 nichts über Homebrew nachinstallieren.
 
 Aufruf (nach ``brew install tesseract tesseract-lang ghostscript``):
-    python tools/vendor_macos.py                    # gängige Sprachen (~70 MB)
-    python tools/vendor_macos.py --languages all    # alle Sprachen (~340 MB)
-    python tools/vendor_macos.py --languages deu,eng
+    python tools/vendor_macos.py                        # Deutsch und Englisch
+    python tools/vendor_macos.py --languages european   # 26 europäische Sprachen
+    python tools/vendor_macos.py --languages all        # alle installierten
+    python tools/vendor_macos.py --languages deu,eng,fra
 
 Was passiert: Die Programme werden kopiert, alle von ihnen benötigten
 Bibliotheken aus /opt/homebrew bzw. /usr/local hinterher, und anschließend
@@ -37,9 +38,21 @@ TOOLS = ("tesseract", "gs")
 # gebaut und die Oberfläche sperrt die betroffenen Stufen.
 OPTIONAL_TOOLS = ("pngquant", "jbig2")
 
-# Voreinstellung: die in Europa gebräuchlichen Sprachen. Das deckt fast alle
-# Anwendungsfälle ab und hält das Paket bei etwa einem Fünftel der Größe.
-COMMON_LANGUAGES = (
+# Sprachpakete, die in die fertigen Pakete eingebettet werden.
+#
+# "standard" ist die Voreinstellung und enthält nur Deutsch und Englisch. Das
+# hält das Paket klein genug, um es als Release-Artefakt hochladen zu können
+# (Codeberg nimmt höchstens 100 MB je Datei). Alle übrigen Sprachen lassen sich
+# jederzeit nachinstallieren; die Anwendung zeigt automatisch an, was vorhanden
+# ist.
+#
+# "osd" ist keine Sprache, sondern das Modell zur Erkennung von Schriftrichtung
+# und Schriftsystem. Ohne dieses Modell scheitert die Einstellung "Seiten
+# automatisch drehen".
+STANDARD_LANGUAGES = ("deu", "eng", "osd")
+
+# Die in Europa gebräuchlichen Sprachen, für ein bewusst größeres Paket.
+EUROPEAN_LANGUAGES = (
     "deu", "deu_latf", "eng", "fra", "spa", "ita", "nld", "por", "pol",
     "ces", "dan", "swe", "nor", "fin", "hun", "ron", "tur", "rus", "ell",
     "ukr", "slk", "slv", "hrv", "bul", "cat", "lat", "osd",
@@ -232,10 +245,13 @@ def copy_tessdata(destination: Path, wanted: Optional[Set[str]]) -> int:
 
 def parse_languages(value: str) -> Optional[Set[str]]:
     """Wertet die Option ``--languages`` aus. ``None`` bedeutet: alle."""
-    if value.strip().lower() == "all":
+    gewaehlt = value.strip().lower()
+    if gewaehlt == "all":
         return None
-    if value.strip().lower() == "common":
-        return set(COMMON_LANGUAGES)
+    if gewaehlt == "standard":
+        return set(STANDARD_LANGUAGES)
+    if gewaehlt == "european":
+        return set(EUROPEAN_LANGUAGES)
     return {code.strip() for code in value.split(",") if code.strip()}
 
 
@@ -248,8 +264,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Bundle Tesseract and Ghostscript.")
     parser.add_argument(
         "--languages",
-        default="common",
-        help='"common" (default), "all", or a comma-separated list such as "deu,eng"',
+        default="standard",
+        help='"standard" (Vorgabe: deu, eng, osd), "european", "all" oder eine Liste wie "deu,eng,fra"',
     )
     arguments = parser.parse_args()
     wanted = parse_languages(arguments.languages)

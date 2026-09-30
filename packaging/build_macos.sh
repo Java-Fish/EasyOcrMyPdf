@@ -69,11 +69,19 @@ if [ "$MAKE_DMG" -eq 1 ]; then
   ln -s /Applications "$DMG_DIR/Applications"
   # Dateiname ohne Leerzeichen: das erspart beim Herunterladen "%20" in der URL.
   rm -f "dist/$DMG_NAME"
+  # ULMO komprimiert mit LZMA und liefert rund ein Viertel kleinere Dateien als
+  # das übliche UDZO. Zum Einbinden wird macOS 10.15 oder neuer benötigt, was
+  # ohnehin Voraussetzung für diese Anwendung ist.
   hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_DIR" \
-    -ov -format UDZO "dist/$DMG_NAME" >/dev/null
+    -ov -format ULMO "dist/$DMG_NAME" >/dev/null
   rm -rf "$DMG_DIR"
   echo "    dist/$DMG_NAME"
 fi
+
+# --- Prüfsummen ------------------------------------------------------------
+echo "==> Writing checksums"
+"$PYTHON" tools/make_checksums.py >/dev/null
+echo "    dist/sha.txt"
 
 SIZE="$(du -sh "dist/$APP_NAME.app" | cut -f1)"
 echo

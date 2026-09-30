@@ -74,6 +74,11 @@ if ($Installer) {
     }
 }
 
+# --- Prüfsummen ------------------------------------------------------------
+Write-Host "==> Writing checksums"
+& $Python tools\make_checksums.py | Out-Null
+Write-Host "    dist\sha.txt"
+
 $Size = "{0:N0} MB" -f ((Get-ChildItem "dist\$AppName" -Recurse -File |
         Measure-Object -Property Length -Sum).Sum / 1MB)
 Write-Host ""

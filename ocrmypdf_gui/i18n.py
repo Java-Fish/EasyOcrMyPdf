@@ -209,6 +209,57 @@ _STRINGS: Dict[str, Dict[str, str]] = {
         "de": "Alle {count} Dateien wurden verarbeitet.",
         "en": "All {count} files have been processed.",
     },
+    # --- Sprachen nachladen ---------------------------------------------
+    "settings.language.manage": {"de": "Weitere Sprachen laden ...", "en": "Get more languages ..."},
+    "download.title": {"de": "Sprachen verwalten", "en": "Manage languages"},
+    "download.intro": {
+        "de": "Hier lassen sich weitere Sprachen für die Texterkennung herunterladen. "
+              "Sie stammen aus dem offiziellen Projekt von Tesseract.",
+        "en": "Download additional languages for text recognition here. "
+              "They come from the official Tesseract project.",
+    },
+    "download.variant": {"de": "Modellqualität", "en": "Model quality"},
+    "download.variant.fast": {"de": "Schnell (kleine Dateien)", "en": "Fast (small files)"},
+    "download.variant.best": {"de": "Genau (große Dateien)", "en": "Accurate (large files)"},
+    "download.variant.help": {
+        "de": "„Schnell“ genügt für saubere Scans und ist die mitgelieferte Variante. "
+              "„Genau“ erkennt schwierige Vorlagen besser, braucht aber mehr Platz und Zeit.",
+        "en": "“Fast” is enough for clean scans and is the bundled variant. "
+              "“Accurate” handles difficult originals better but needs more space and time.",
+    },
+    "download.search": {"de": "Sprache suchen", "en": "Search language"},
+    "download.state.installed": {"de": "installiert", "en": "installed"},
+    "download.action.download": {"de": "Laden", "en": "Get"},
+    "download.action.remove": {"de": "Entfernen", "en": "Remove"},
+    "download.loading": {"de": "Liste wird geladen ...", "en": "Loading list ..."},
+    "download.count": {
+        "de": "{installed} von {total} Sprachen installiert",
+        "en": "{installed} of {total} languages installed",
+    },
+    "download.progress": {"de": "{name} wird geladen ...", "en": "Downloading {name} ..."},
+    "download.done": {"de": "{name} wurde installiert.", "en": "{name} has been installed."},
+    "download.removed": {"de": "{name} wurde entfernt.", "en": "{name} has been removed."},
+    "download.removeFailed": {
+        "de": "{name} konnte nicht entfernt werden.",
+        "en": "{name} could not be removed.",
+    },
+    "download.lastLanguage": {
+        "de": "Die letzte Sprache lässt sich nicht entfernen.",
+        "en": "The last language cannot be removed.",
+    },
+    "download.error.network": {
+        "de": "Keine Verbindung zum Server. Prüfen Sie Ihre Internetverbindung.",
+        "en": "No connection to the server. Please check your internet connection.",
+    },
+    "download.error.notFound": {
+        "de": "Diese Sprache gibt es in der gewählten Qualität nicht.",
+        "en": "This language is not available in the selected quality.",
+    },
+    "download.error.write": {
+        "de": "Die Datei konnte nicht gespeichert werden.",
+        "en": "The file could not be saved.",
+    },
+    "download.error.cancelled": {"de": "Abgebrochen.", "en": "Cancelled."},
     # --- Meldungen ------------------------------------------------------
     "msg.noFiles.title": {"de": "Keine Dateien", "en": "No files"},
     "msg.noFiles.text": {
