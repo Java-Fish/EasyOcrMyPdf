@@ -273,14 +273,27 @@ class SettingsPanel(Card):
         self._update_language_button()
 
     def _prune_missing_languages(self) -> None:
-        """Entfernt Sprachen aus der Auswahl, deren Paket nicht (mehr) da ist."""
+        """Entfernt Sprachen aus der Auswahl, deren Paket nicht (mehr) da ist.
+
+        Bleibt dabei nichts übrig, wird ein Ersatz gesucht: zuerst die Sprache
+        der Oberfläche, dann die jeweils andere, zuletzt irgendeine vorhandene.
+        Ohne diesen letzten Schritt stünde die Anwendung ohne Sprache da und
+        ließe sich nicht mehr starten, obwohl Sprachpakete vorhanden sind.
+        """
         if not self._available_languages:
             return
         kept = [code for code in self._settings.languages if code in self._available_languages]
         if not kept:
-            # Sinnvoller Ersatz: die Sprache der Oberfläche, sonst Englisch.
-            fallback = "deu" if tr.language == "de" else "eng"
-            kept = [fallback] if fallback in self._available_languages else []
+            bevorzugt = ["deu", "eng"] if tr.language == "de" else ["eng", "deu"]
+            auswahl = [
+                code for code in self._available_languages
+                if language_names.is_selectable(code)
+            ]
+            ersatz = next(
+                (code for code in bevorzugt if code in auswahl),
+                auswahl[0] if auswahl else None,
+            )
+            kept = [ersatz] if ersatz else []
         self._settings.languages = kept
 
     def _choose_languages(self) -> None:

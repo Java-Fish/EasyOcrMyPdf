@@ -23,7 +23,6 @@ DEFAULT_UI_LANGUAGE = "de"
 # unverändert ausgegeben, damit die Oberfläche nie leer bleibt.
 _STRINGS: Dict[str, Dict[str, str]] = {
     # --- Fenster und Kopfbereich ---------------------------------------
-    "app.title": {"de": "OCRmyPDF GUI", "en": "OCRmyPDF GUI"},
     "app.subtitle": {
         "de": "PDFs durchsuchbar machen, ganz ohne Kommandozeile",
         "en": "Make PDFs searchable, no command line needed",
@@ -47,7 +46,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     "list.empty": {"de": "Noch keine Dateien ausgewählt.", "en": "No files selected yet."},
     "list.count.one": {"de": "1 Datei", "en": "1 file"},
     "list.count.many": {"de": "{count} Dateien", "en": "{count} files"},
-    "list.remove": {"de": "Entfernen", "en": "Remove"},
     "list.clear": {"de": "Liste leeren", "en": "Clear list"},
     "list.add": {"de": "Dateien hinzufügen", "en": "Add files"},
     "list.duplicate": {"de": "Bereits in der Liste", "en": "Already in the list"},
@@ -70,7 +68,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
         "de": "Mehrere Sprachen lassen sich kombinieren, das kostet aber Zeit.",
         "en": "Several languages can be combined, but this costs time.",
     },
-    "settings.language.choose": {"de": "Sprachen auswählen ...", "en": "Choose languages ..."},
     "settings.language.none": {"de": "Keine Sprache gewählt", "en": "No language selected"},
     "settings.language.search": {"de": "Sprache suchen", "en": "Search language"},
     "settings.language.selected": {
@@ -114,7 +111,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     },
     # --- Einstellungen: erweitert ---------------------------------------
     "advanced.title": {"de": "Erweiterte Einstellungen", "en": "Advanced settings"},
-    "advanced.show": {"de": "Erweiterte Einstellungen anzeigen", "en": "Show advanced settings"},
     "advanced.mode": {"de": "Wenn bereits Text vorhanden ist", "en": "If text already exists"},
     "advanced.mode.skip": {"de": "Seite überspringen (Standard)", "en": "Skip the page (default)"},
     "advanced.mode.redo": {"de": "Vorhandene Texterkennung erneuern", "en": "Redo existing OCR"},
@@ -171,7 +167,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     "action.openOutput": {"de": "Zielordner öffnen", "en": "Open target folder"},
     "action.ok": {"de": "OK", "en": "OK"},
     "action.close": {"de": "Schließen", "en": "Close"},
-    "action.details": {"de": "Details", "en": "Details"},
     "action.retry": {"de": "Erneut prüfen", "en": "Check again"},
     "action.quit": {"de": "Beenden", "en": "Quit"},
     "action.continueAnyway": {"de": "Trotzdem fortfahren", "en": "Continue anyway"},
@@ -198,17 +193,12 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     },
     "progress.finished": {"de": "Verarbeitung abgeschlossen", "en": "Processing finished"},
     "progress.cancelling": {"de": "Wird abgebrochen ...", "en": "Cancelling ..."},
-    "log.title": {"de": "Protokoll", "en": "Log"},
     "log.show": {"de": "Protokoll anzeigen", "en": "Show log"},
     "log.save": {"de": "Protokoll speichern", "en": "Save log"},
     "log.showAll": {"de": "Alle Details anzeigen", "en": "Show all details"},
     "log.saveDialog": {"de": "Protokoll speichern", "en": "Save log"},
     "log.savedTo": {"de": "Protokoll gespeichert: {path}", "en": "Log saved: {path}"},
     "progress.elapsed": {"de": "{seconds} s", "en": "{seconds} s"},
-    "progress.allDone": {
-        "de": "Alle {count} Dateien wurden verarbeitet.",
-        "en": "All {count} files have been processed.",
-    },
     # --- Sprachen nachladen ---------------------------------------------
     "settings.language.manage": {"de": "Weitere Sprachen laden ...", "en": "Get more languages ..."},
     "download.title": {"de": "Sprachen verwalten", "en": "Manage languages"},

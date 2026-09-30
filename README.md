@@ -11,7 +11,7 @@ durchsuchbar, per Doppelklick gestartet und ganz ohne Kommandozeile.
 - PDF-Dateien per Ziehen-und-Ablegen oder über den Dateidialog einlesen (nur PDF)
 - Mehrere Dateien nacheinander abarbeiten, mit Fortschrittsanzeige je Seite
 - Ausgabe als PDF, PDF/A, PDF/A-1b, PDF/A-2b oder PDF/A-3b
-- Texterkennung in Deutsch und Englisch ab Werk, rund 120 weitere Sprachen
+- Texterkennung in Deutsch und Englisch ab Werk, über 120 weitere Sprachen
   direkt in der Anwendung nachladbar, auch mehrere gleichzeitig
 - Speichern in einen festen Ordner oder in einen Unterordner neben dem Original
 - Oberfläche auf Deutsch und Englisch
@@ -237,7 +237,7 @@ die Verarbeitung spürbar; mehr als zwei sind selten sinnvoll.
 **Weitere Sprachen nachladen**
 
 Die fertigen Pakete bringen Deutsch und Englisch mit. Über *Weitere Sprachen
-laden ...* in der Sprachauswahl holt die Anwendung jede der rund 120 weiteren
+laden ...* in der Sprachauswahl holt die Anwendung jede der über 120 weiteren
 Sprachen direkt aus dem offiziellen Projekt von Tesseract. Eine Installation
 von Hand oder über die Kommandozeile ist nicht nötig.
 
@@ -437,8 +437,8 @@ Ergebnis: `dist/OCRmyPDF GUI.app` und `dist/OCRmyPDF-GUI.dmg`.
 
 | Option | Wirkung |
 |---|---|
-| *(ohne)* | Schlankes Paket (172 MB). Tesseract und Ghostscript müssen auf dem Zielrechner installiert sein. |
-| `--vendor` | Liefert Tesseract, Ghostscript, pngquant und jbig2enc mit (198 MB, DMG 91 MB). Die App läuft ohne Vorinstallation. |
+| *(ohne)* | Schlankes Paket (151 MB, DMG 54 MB). Tesseract und Ghostscript müssen auf dem Zielrechner installiert sein. |
+| `--vendor` | Liefert Tesseract, Ghostscript, pngquant und jbig2enc mit (195 MB, DMG 69 MB). Die App läuft ohne Vorinstallation. |
 | `--dmg` | Erzeugt zusätzlich ein DMG mit Verknüpfung zum Programme-Ordner. |
 
 ### Windows: `.exe` und Installationsprogramm bauen

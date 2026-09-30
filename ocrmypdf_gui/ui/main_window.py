@@ -14,6 +14,7 @@ from PySide6.QtGui import (
     QDropEvent,
 )
 from PySide6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QFileDialog,
     QHBoxLayout,
@@ -68,6 +69,14 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._retranslate()
         self._update_controls()
+
+        # Wird die Anwendung beendet, ohne dass das Fenster geschlossen wird
+        # (etwa über das Programmmenü), läuft closeEvent nicht. Ohne diese
+        # Absicherung würde der Arbeits-Thread beim Abräumen noch laufen, was
+        # Qt mit "QThread: Destroyed while thread is still running" quittiert.
+        anwendung = QApplication.instance()
+        if anwendung is not None:
+            anwendung.aboutToQuit.connect(self._stop_runner)
 
     # ------------------------------------------------------------------
     # Aufbau
@@ -531,6 +540,15 @@ class MainWindow(QMainWindow):
         if rejected:
             self._warn_rejected(rejected)
 
+    def _stop_runner(self) -> None:
+        """Bricht eine laufende Verarbeitung ab und wartet auf ihr Ende."""
+        if self._runner is None:
+            return
+        if self._runner.isRunning():
+            self._runner.cancel()
+            self._runner.wait(5000)
+        self._running = False
+
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
         """Fragt nach, wenn beim Schließen noch eine Verarbeitung läuft."""
         if self._running and self._runner is not None:
@@ -544,8 +562,7 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.StandardButton.Yes:
                 event.ignore()
                 return
-            self._runner.cancel()
-            self._runner.wait(5000)
+            self._stop_runner()
 
         config.save_settings(self._settings_panel.settings)
         super().closeEvent(event)
