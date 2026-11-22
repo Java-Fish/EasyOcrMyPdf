@@ -41,10 +41,38 @@ def extract_text(path: Path) -> str:
     return pdfminer_extract(str(path))
 
 
+def print_process_tree(pid: int) -> None:
+    """Zeigt, welche Kindprozesse noch laufen; hilft, einen Hänger zu orten."""
+    try:
+        import psutil
+    except ImportError:
+        print("  (install psutil to see the remaining child processes)", file=sys.stderr)
+        return
+    try:
+        for child in psutil.Process(pid).children(recursive=True):
+            print(f"  still running: pid {child.pid} {child.cmdline()}", file=sys.stderr)
+    except psutil.Error as error:
+        print(f"  process tree unavailable: {error}", file=sys.stderr)
+
+
+def kill_tree(process: subprocess.Popen) -> None:
+    """Beendet den Prozess samt Kindern, damit nichts hängen bleibt."""
+    try:
+        import psutil
+
+        for child in psutil.Process(process.pid).children(recursive=True):
+            child.kill()
+    except Exception:
+        pass
+    process.kill()
+    process.wait()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("binary", type=Path, help="das gebaute Programm")
     parser.add_argument("--language", default="deu", help="Tesseract-Sprachcode")
+    parser.add_argument("--timeout", type=int, default=600, help="Sekunden bis zum Abbruch")
     arguments = parser.parse_args()
 
     with tempfile.TemporaryDirectory() as folder:
@@ -58,12 +86,22 @@ def main() -> int:
             str(source), str(target),
         ]
         print("$", " ".join(command), flush=True)
-        result = subprocess.run(command, capture_output=True, text=True, timeout=600)
-        print(result.stdout[-4000:])
-        print(result.stderr[-4000:], file=sys.stderr)
+        # Die Ausgabe geht in eine Datei statt in eine Pipe: so bleibt sie
+        # auch dann lesbar, wenn der Prozess hängt und abgebrochen wird.
+        log_path = Path(folder) / "ausgabe.txt"
+        with log_path.open("w", encoding="utf-8", errors="replace") as log:
+            process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
+            try:
+                return_code = process.wait(timeout=arguments.timeout)
+            except subprocess.TimeoutExpired:
+                print(f"FAILED: no result after {arguments.timeout} s", file=sys.stderr)
+                print_process_tree(process.pid)
+                kill_tree(process)
+                return_code = None
+        print(log_path.read_text(encoding="utf-8", errors="replace")[-6000:])
 
-        if result.returncode != 0 or not target.is_file():
-            print(f"FAILED: exit code {result.returncode}", file=sys.stderr)
+        if return_code != 0 or not target.is_file():
+            print(f"FAILED: exit code {return_code}", file=sys.stderr)
             return 1
 
         text = extract_text(target)

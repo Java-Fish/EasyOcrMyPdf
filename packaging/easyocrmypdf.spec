@@ -21,6 +21,12 @@ IS_WINDOWS = sys.platform == "win32"
 IS_MACOS = sys.platform == "darwin"
 IS_LINUX = not IS_WINDOWS and not IS_MACOS
 
+# Symbole nur unter macOS und Linux entfernen. Unter Windows fände PyInstaller
+# das GNU-strip aus Git oder MSYS2, und das beschädigt die mit MSVC gebauten
+# DLLs: Die .exe bricht dann mit "Failed to load Python DLL ... Invalid access
+# to memory location" ab, bevor eine Zeile Python läuft.
+STRIP = not IS_WINDOWS
+
 APP_NAME = "EasyOcrMyPdf"
 # Unter Linux sind Leerzeichen in Programmnamen unüblich und erschweren den
 # Aufruf aus der Shell; dort heißt die Datei deshalb "easyocrmypdf".
@@ -186,7 +192,7 @@ executable = EXE(  # noqa: F821
     name=BINARY_NAME,
     debug=False,
     bootloader_ignore_signals=False,
-    strip=True,
+    strip=STRIP,
     upx=False,
     console=False,  # kein Konsolenfenster, die Anwendung ist rein grafisch
     disable_windowed_traceback=False,
@@ -203,7 +209,7 @@ collection = COLLECT(  # noqa: F821
     executable,
     analysis.binaries,
     analysis.datas,
-    strip=True,
+    strip=STRIP,
     upx=False,
     upx_exclude=[],
     name=BINARY_NAME,
