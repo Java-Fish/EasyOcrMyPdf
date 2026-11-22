@@ -11,6 +11,17 @@ from typing import Any, Dict, List, Optional
 # Name des Unterordners, der neben der Originaldatei angelegt wird.
 DEFAULT_SUBFOLDER_NAME = "OCR"
 
+# Zulässige Bereiche der Zahlenwerte. Sie stehen hier und nur hier, damit
+# Oberfläche und Einlesen der Einstellungsdatei dieselben Grenzen verwenden;
+# vorher wichen sie voneinander ab.
+OPTIMIZE_LEVEL_RANGE = (0, 3)
+JOBS_RANGE = (0, 64)            # mehr Prozesse als Kerne bringen nichts
+IMAGE_DPI_RANGE = (0, 2400)     # darüber wird die Erkennung nicht besser
+PAGE_TIMEOUT_RANGE = (0, 3600)  # eine Stunde je Seite ist reichlich bemessen
+
+# Längste zulässige Ergänzung am Dateinamen.
+MAX_SUFFIX_LENGTH = 32
+
 # Obergrenze für einen Dateinamen. Praktisch alle gängigen Dateisysteme
 # (APFS, HFS+, NTFS, ext4) erlauben 255 Bytes je Namensbestandteil.
 MAX_FILENAME_BYTES = 255
@@ -153,11 +164,11 @@ class ExportSettings:
             if isinstance(data.get(key), bool):
                 setattr(settings, key, data[key])
 
-        for key, minimum, maximum in (
-            ("optimize_level", 0, 3),
-            ("jobs", 0, 64),
-            ("image_dpi", 0, 2400),
-            ("page_timeout", 0, 100_000),
+        for key, (minimum, maximum) in (
+            ("optimize_level", OPTIMIZE_LEVEL_RANGE),
+            ("jobs", JOBS_RANGE),
+            ("image_dpi", IMAGE_DPI_RANGE),
+            ("page_timeout", PAGE_TIMEOUT_RANGE),
         ):
             raw = data.get(key)
             if isinstance(raw, int) and not isinstance(raw, bool):
@@ -285,7 +296,7 @@ def sanitize_suffix(suffix: str) -> str:
     """Entfernt Zeichen, die in Dateinamen Probleme machen."""
     forbidden = set('\\/:*?"<>|')
     cleaned = "".join(char for char in suffix if char not in forbidden)
-    return cleaned.strip()[:32]
+    return cleaned.strip()[:MAX_SUFFIX_LENGTH]
 
 
 def _same_file(first: Path, second: Path) -> bool:

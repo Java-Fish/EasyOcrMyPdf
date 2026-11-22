@@ -23,7 +23,6 @@ DEFAULT_UI_LANGUAGE = "de"
 # unverändert ausgegeben, damit die Oberfläche nie leer bleibt.
 _STRINGS: Dict[str, Dict[str, str]] = {
     # --- Fenster und Kopfbereich ---------------------------------------
-    "app.title": {"de": "OCRmyPDF GUI", "en": "OCRmyPDF GUI"},
     "app.subtitle": {
         "de": "PDFs durchsuchbar machen, ganz ohne Kommandozeile",
         "en": "Make PDFs searchable, no command line needed",
@@ -47,7 +46,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     "list.empty": {"de": "Noch keine Dateien ausgewählt.", "en": "No files selected yet."},
     "list.count.one": {"de": "1 Datei", "en": "1 file"},
     "list.count.many": {"de": "{count} Dateien", "en": "{count} files"},
-    "list.remove": {"de": "Entfernen", "en": "Remove"},
     "list.clear": {"de": "Liste leeren", "en": "Clear list"},
     "list.add": {"de": "Dateien hinzufügen", "en": "Add files"},
     "list.duplicate": {"de": "Bereits in der Liste", "en": "Already in the list"},
@@ -70,7 +68,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
         "de": "Mehrere Sprachen lassen sich kombinieren, das kostet aber Zeit.",
         "en": "Several languages can be combined, but this costs time.",
     },
-    "settings.language.choose": {"de": "Sprachen auswählen ...", "en": "Choose languages ..."},
     "settings.language.none": {"de": "Keine Sprache gewählt", "en": "No language selected"},
     "settings.language.search": {"de": "Sprache suchen", "en": "Search language"},
     "settings.language.selected": {
@@ -114,7 +111,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     },
     # --- Einstellungen: erweitert ---------------------------------------
     "advanced.title": {"de": "Erweiterte Einstellungen", "en": "Advanced settings"},
-    "advanced.show": {"de": "Erweiterte Einstellungen anzeigen", "en": "Show advanced settings"},
     "advanced.mode": {"de": "Wenn bereits Text vorhanden ist", "en": "If text already exists"},
     "advanced.mode.skip": {"de": "Seite überspringen (Standard)", "en": "Skip the page (default)"},
     "advanced.mode.redo": {"de": "Vorhandene Texterkennung erneuern", "en": "Redo existing OCR"},
@@ -171,7 +167,6 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     "action.openOutput": {"de": "Zielordner öffnen", "en": "Open target folder"},
     "action.ok": {"de": "OK", "en": "OK"},
     "action.close": {"de": "Schließen", "en": "Close"},
-    "action.details": {"de": "Details", "en": "Details"},
     "action.retry": {"de": "Erneut prüfen", "en": "Check again"},
     "action.quit": {"de": "Beenden", "en": "Quit"},
     "action.continueAnyway": {"de": "Trotzdem fortfahren", "en": "Continue anyway"},
@@ -198,17 +193,63 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     },
     "progress.finished": {"de": "Verarbeitung abgeschlossen", "en": "Processing finished"},
     "progress.cancelling": {"de": "Wird abgebrochen ...", "en": "Cancelling ..."},
-    "log.title": {"de": "Protokoll", "en": "Log"},
     "log.show": {"de": "Protokoll anzeigen", "en": "Show log"},
     "log.save": {"de": "Protokoll speichern", "en": "Save log"},
     "log.showAll": {"de": "Alle Details anzeigen", "en": "Show all details"},
     "log.saveDialog": {"de": "Protokoll speichern", "en": "Save log"},
     "log.savedTo": {"de": "Protokoll gespeichert: {path}", "en": "Log saved: {path}"},
     "progress.elapsed": {"de": "{seconds} s", "en": "{seconds} s"},
-    "progress.allDone": {
-        "de": "Alle {count} Dateien wurden verarbeitet.",
-        "en": "All {count} files have been processed.",
+    # --- Sprachen nachladen ---------------------------------------------
+    "settings.language.manage": {"de": "Weitere Sprachen laden ...", "en": "Get more languages ..."},
+    "download.title": {"de": "Sprachen verwalten", "en": "Manage languages"},
+    "download.intro": {
+        "de": "Hier lassen sich weitere Sprachen für die Texterkennung herunterladen. "
+              "Sie stammen aus dem offiziellen Projekt von Tesseract.",
+        "en": "Download additional languages for text recognition here. "
+              "They come from the official Tesseract project.",
     },
+    "download.variant": {"de": "Modellqualität", "en": "Model quality"},
+    "download.variant.fast": {"de": "Schnell (kleine Dateien)", "en": "Fast (small files)"},
+    "download.variant.best": {"de": "Genau (große Dateien)", "en": "Accurate (large files)"},
+    "download.variant.help": {
+        "de": "„Schnell“ genügt für saubere Scans und ist die mitgelieferte Variante. "
+              "„Genau“ erkennt schwierige Vorlagen besser, braucht aber mehr Platz und Zeit.",
+        "en": "“Fast” is enough for clean scans and is the bundled variant. "
+              "“Accurate” handles difficult originals better but needs more space and time.",
+    },
+    "download.search": {"de": "Sprache suchen", "en": "Search language"},
+    "download.state.installed": {"de": "installiert", "en": "installed"},
+    "download.action.download": {"de": "Laden", "en": "Get"},
+    "download.action.remove": {"de": "Entfernen", "en": "Remove"},
+    "download.loading": {"de": "Liste wird geladen ...", "en": "Loading list ..."},
+    "download.count": {
+        "de": "{installed} von {total} Sprachen installiert",
+        "en": "{installed} of {total} languages installed",
+    },
+    "download.progress": {"de": "{name} wird geladen ...", "en": "Downloading {name} ..."},
+    "download.done": {"de": "{name} wurde installiert.", "en": "{name} has been installed."},
+    "download.removed": {"de": "{name} wurde entfernt.", "en": "{name} has been removed."},
+    "download.removeFailed": {
+        "de": "{name} konnte nicht entfernt werden.",
+        "en": "{name} could not be removed.",
+    },
+    "download.lastLanguage": {
+        "de": "Die letzte Sprache lässt sich nicht entfernen.",
+        "en": "The last language cannot be removed.",
+    },
+    "download.error.network": {
+        "de": "Keine Verbindung zum Server. Prüfen Sie Ihre Internetverbindung.",
+        "en": "No connection to the server. Please check your internet connection.",
+    },
+    "download.error.notFound": {
+        "de": "Diese Sprache gibt es in der gewählten Qualität nicht.",
+        "en": "This language is not available in the selected quality.",
+    },
+    "download.error.write": {
+        "de": "Die Datei konnte nicht gespeichert werden.",
+        "en": "The file could not be saved.",
+    },
+    "download.error.cancelled": {"de": "Abgebrochen.", "en": "Cancelled."},
     # --- Meldungen ------------------------------------------------------
     "msg.noFiles.title": {"de": "Keine Dateien", "en": "No files"},
     "msg.noFiles.text": {
@@ -308,8 +349,8 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     # --- Einrichtungsdialog ---------------------------------------------
     "setup.title": {"de": "Einrichtung", "en": "Setup"},
     "setup.intro": {
-        "de": "OCRmyPDF GUI benötigt zwei Hilfsprogramme. Es fehlt noch etwas:",
-        "en": "OCRmyPDF GUI needs two helper programs. Something is still missing:",
+        "de": "EasyOcrMyPdf benötigt zwei Hilfsprogramme. Es fehlt noch etwas:",
+        "en": "EasyOcrMyPdf needs two helper programs. Something is still missing:",
     },
     "setup.allGood": {"de": "Alles bereit.", "en": "Everything is ready."},
     "setup.found": {"de": "gefunden", "en": "found"},
@@ -400,8 +441,10 @@ def _windows_ui_language() -> str:
     try:
         import ctypes
 
-        buffer = ctypes.create_unicode_buffer(85)
-        if ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, 85):  # type: ignore[attr-defined]
+        # Von Windows vorgegebene Puffergröße für einen Gebietsschema-Namen.
+        laenge = 85
+        buffer = ctypes.create_unicode_buffer(laenge)
+        if ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, laenge):  # type: ignore[attr-defined]
             return buffer.value
     except Exception:  # pragma: no cover - rein defensiv
         pass

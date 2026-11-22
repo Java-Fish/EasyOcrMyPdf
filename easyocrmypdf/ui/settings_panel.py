@@ -20,18 +20,22 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui import dependencies
-from ocrmypdf_gui import languages as language_names
-from ocrmypdf_gui.i18n import SUPPORTED_UI_LANGUAGES, tr
-from ocrmypdf_gui.models import (
+from easyocrmypdf import dependencies
+from easyocrmypdf import languages as language_names
+from easyocrmypdf.i18n import SUPPORTED_UI_LANGUAGES, tr
+from easyocrmypdf.models import (
     DEFAULT_OPTIMIZE_LEVEL,
+    IMAGE_DPI_RANGE,
+    JOBS_RANGE,
+    MAX_SUFFIX_LENGTH,
+    PAGE_TIMEOUT_RANGE,
     ExportSettings,
     OcrMode,
     OutputMode,
     PdfType,
 )
-from ocrmypdf_gui.ui.language_dialog import LanguageDialog
-from ocrmypdf_gui.ui.widgets import Card, CollapsibleSection, Field, horizontal_separator
+from easyocrmypdf.ui.language_dialog import LanguageDialog
+from easyocrmypdf.ui.widgets import Card, CollapsibleSection, Field, horizontal_separator
 
 # Reihenfolge der Optimierungsstufen in der Auswahlliste.
 _OPTIMIZE_LEVELS = (0, 1, 2, 3)
@@ -116,6 +120,9 @@ class SettingsPanel(Card):
 
         self._folder_row = folder_row
         self._output_field = Field(tr("settings.output"), output_container)
+        # Das Field beschriftet den Container; die Elemente darin brauchen
+        # eigene Namen, damit Vorleseprogramme sie benennen können.
+        self._name_output_controls()
         self.body.addWidget(self._output_field)
 
     def _build_advanced(self) -> None:
@@ -163,21 +170,21 @@ class SettingsPanel(Card):
 
         # --- Namenszusatz ---
         self._suffix = QLineEdit(self)
-        self._suffix.setMaxLength(32)
+        self._suffix.setMaxLength(MAX_SUFFIX_LENGTH)
         self._suffix.textEdited.connect(self._emit_changed)
         self._suffix_field = Field(tr("advanced.suffix"), self._suffix)
         content.addWidget(self._suffix_field)
 
         # --- Zahlenwerte ---
         self._jobs = QSpinBox(self)
-        self._jobs.setRange(0, 32)
+        self._jobs.setRange(*JOBS_RANGE)
         self._jobs.setSpecialValueText(tr("advanced.jobs.auto"))
         self._jobs.valueChanged.connect(self._emit_changed)
         self._jobs_field = Field(tr("advanced.jobs"), self._jobs)
         content.addWidget(self._jobs_field)
 
         self._dpi = QSpinBox(self)
-        self._dpi.setRange(0, 2400)
+        self._dpi.setRange(*IMAGE_DPI_RANGE)
         self._dpi.setSingleStep(50)
         self._dpi.setSpecialValueText(tr("advanced.jobs.auto"))
         self._dpi.valueChanged.connect(self._emit_changed)
@@ -185,7 +192,7 @@ class SettingsPanel(Card):
         content.addWidget(self._dpi_field)
 
         self._timeout = QSpinBox(self)
-        self._timeout.setRange(0, 3600)
+        self._timeout.setRange(*PAGE_TIMEOUT_RANGE)
         self._timeout.setSingleStep(30)
         self._timeout.setSpecialValueText(tr("advanced.timeout.none"))
         self._timeout.valueChanged.connect(self._emit_changed)
@@ -209,6 +216,12 @@ class SettingsPanel(Card):
         content.addWidget(self._reset_button, 0, Qt.AlignmentFlag.AlignLeft)
 
         self.body.addWidget(self._advanced)
+
+    def _name_output_controls(self) -> None:
+        """Gibt den Elementen der Speicherort-Auswahl zugängliche Namen."""
+        self._output_mode.setAccessibleName(tr("settings.output"))
+        self._output_path.setAccessibleName(tr("settings.output.custom"))
+        self._browse_button.setAccessibleName(tr("settings.output.browse"))
 
     # ------------------------------------------------------------------
     # Laden und Speichern
@@ -273,14 +286,27 @@ class SettingsPanel(Card):
         self._update_language_button()
 
     def _prune_missing_languages(self) -> None:
-        """Entfernt Sprachen aus der Auswahl, deren Paket nicht (mehr) da ist."""
+        """Entfernt Sprachen aus der Auswahl, deren Paket nicht (mehr) da ist.
+
+        Bleibt dabei nichts übrig, wird ein Ersatz gesucht: zuerst die Sprache
+        der Oberfläche, dann die jeweils andere, zuletzt irgendeine vorhandene.
+        Ohne diesen letzten Schritt stünde die Anwendung ohne Sprache da und
+        ließe sich nicht mehr starten, obwohl Sprachpakete vorhanden sind.
+        """
         if not self._available_languages:
             return
         kept = [code for code in self._settings.languages if code in self._available_languages]
         if not kept:
-            # Sinnvoller Ersatz: die Sprache der Oberfläche, sonst Englisch.
-            fallback = "deu" if tr.language == "de" else "eng"
-            kept = [fallback] if fallback in self._available_languages else []
+            preferred = ["deu", "eng"] if tr.language == "de" else ["eng", "deu"]
+            selectable = [
+                code for code in self._available_languages
+                if language_names.is_selectable(code)
+            ]
+            fallback = next(
+                (code for code in preferred if code in selectable),
+                selectable[0] if selectable else None,
+            )
+            kept = [fallback] if fallback else []
         self._settings.languages = kept
 
     def _choose_languages(self) -> None:
@@ -435,6 +461,7 @@ class SettingsPanel(Card):
         self._output_mode.setItemText(1, tr("settings.output.custom"))
         self._browse_button.setText(tr("settings.output.browse"))
         self._open_folder_button.setText(tr("settings.output.open"))
+        self._name_output_controls()
 
         self._advanced.set_title(tr("advanced.title"))
         self._ocr_mode_field.set_label(tr("advanced.mode"))

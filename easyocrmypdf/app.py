@@ -12,7 +12,7 @@ import multiprocessing
 import sys
 from typing import List, Optional
 
-from ocrmypdf_gui import __app_name__, __version__
+from easyocrmypdf import __app_name__, __version__
 
 # Argument, mit dem sich die Anwendung selbst als OCR-Arbeiter aufruft.
 OCR_WORKER_FLAG = "--ocr-worker"
@@ -27,7 +27,7 @@ def run_ocr_worker(arguments: List[str]) -> int:
     """
     import os
 
-    from ocrmypdf_gui.dependencies import process_environment
+    from easyocrmypdf.dependencies import process_environment
 
     os.environ.update(process_environment())
 
@@ -64,12 +64,12 @@ def _run_gui(argv: List[str]) -> int:
     from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QApplication, QDialog
 
-    from ocrmypdf_gui import config
-    from ocrmypdf_gui.dependencies import check_dependencies
-    from ocrmypdf_gui.i18n import tr
-    from ocrmypdf_gui.ui.main_window import MainWindow
-    from ocrmypdf_gui.ui.setup_dialog import SetupDialog
-    from ocrmypdf_gui.ui.style import apply_theme
+    from easyocrmypdf import config
+    from easyocrmypdf.dependencies import check_dependencies
+    from easyocrmypdf.i18n import tr
+    from easyocrmypdf.ui.main_window import MainWindow
+    from easyocrmypdf.ui.setup_dialog import SetupDialog
+    from easyocrmypdf.ui.style import apply_theme
 
     QApplication.setApplicationName(__app_name__)
     QApplication.setApplicationDisplayName(__app_name__)
@@ -99,7 +99,7 @@ def _run_gui(argv: List[str]) -> int:
     if startup_files:
         from pathlib import Path
 
-        from ocrmypdf_gui.ui.drop_area import split_pdf_paths
+        from easyocrmypdf.ui.drop_area import split_pdf_paths
 
         accepted, _rejected = split_pdf_paths([Path(name) for name in startup_files])
         if accepted:

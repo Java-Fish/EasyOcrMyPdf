@@ -19,8 +19,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui import languages as language_names
-from ocrmypdf_gui.i18n import tr
+from easyocrmypdf import languages as language_names
+from easyocrmypdf.i18n import tr
 
 
 class LanguageDialog(QDialog):
@@ -69,6 +69,9 @@ class LanguageDialog(QDialog):
         hint.setObjectName("Hint")
         hint.setWordWrap(True)
 
+        self._manage_button = QPushButton(tr("settings.language.manage"), self)
+        self._manage_button.clicked.connect(self._open_download_dialog)
+
         self._cancel_button = QPushButton(tr("action.cancel"), self)
         self._cancel_button.clicked.connect(self.reject)
         self._ok_button = QPushButton(tr("action.ok"), self)
@@ -79,6 +82,7 @@ class LanguageDialog(QDialog):
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(8)
+        buttons.addWidget(self._manage_button)
         buttons.addStretch(1)
         buttons.addWidget(self._cancel_button)
         buttons.addWidget(self._ok_button)
@@ -106,6 +110,35 @@ class LanguageDialog(QDialog):
             item = self._list.item(row)
             if item is not None:
                 item.setHidden(bool(needle) and needle not in box.text().lower())
+
+    def _open_download_dialog(self) -> None:
+        """Öffnet die Sprachverwaltung und baut die Liste danach neu auf."""
+        from easyocrmypdf.ui.download_dialog import DownloadDialog
+
+        dialog = DownloadDialog(self)
+        dialog.exec()
+        if dialog.changed:
+            self._rebuild_list()
+
+    def _rebuild_list(self) -> None:
+        """Baut die Auswahlliste neu auf, ohne die Auswahl zu verlieren."""
+        from easyocrmypdf import dependencies
+
+        chosen = set(self.selected_languages())
+        self._list.clear()
+        self._boxes.clear()
+        ui_language = tr.language
+        for code in language_names.order_for_display(dependencies.available_languages(), ui_language):
+            box = QCheckBox(language_names.display_name(code, ui_language), self._list)
+            box.setChecked(code in chosen)
+            box.toggled.connect(self._update_counter)
+            item = QListWidgetItem(self._list)
+            item.setSizeHint(QSize(0, box.sizeHint().height() + 8))
+            self._list.addItem(item)
+            self._list.setItemWidget(item, box)
+            self._boxes.append((code, box))
+        self._apply_filter(self._search.text())
+        self._update_counter()
 
     def _update_counter(self) -> None:
         """Schreibt die Anzahl gewählter Sprachen fort und sperrt OK bei null."""

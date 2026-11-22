@@ -13,21 +13,39 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
-from ocrmypdf_gui.models import ExportSettings
+from easyocrmypdf.models import ExportSettings
 
 CONFIG_FILENAME = "settings.json"
-_APP_FOLDER = "OCRmyPDF-GUI"
+_APP_FOLDER = "EasyOcrMyPdf"
+# Bis Version 0.0.2 hieß die Anwendung "OCRmyPDF GUI" und legte ihre Dateien
+# unter diesem Namen ab.
+_LEGACY_APP_FOLDER = "OCRmyPDF-GUI"
+
+
+def _config_base() -> Path:
+    """Plattformüblicher Elternordner für Einstellungsdateien."""
+    if sys.platform == "win32":
+        return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
 
 
 def config_directory() -> Path:
-    """Plattformüblicher Ort für Einstellungsdateien."""
-    if sys.platform == "win32":
-        base = os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming"
-        return Path(base) / _APP_FOLDER
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support" / _APP_FOLDER
-    base = os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config"
-    return Path(base) / _APP_FOLDER
+    """Ordner für Einstellungen und nachgeladene Sprachen.
+
+    Existiert nur der Ordner aus der Zeit vor der Umbenennung, wird er
+    einmalig umbenannt, damit Einstellungen und Sprachen erhalten bleiben.
+    """
+    base = _config_base()
+    current = base / _APP_FOLDER
+    legacy = base / _LEGACY_APP_FOLDER
+    if not current.exists() and legacy.is_dir():
+        try:
+            legacy.rename(current)
+        except OSError:
+            pass
+    return current
 
 
 def config_path() -> Path:

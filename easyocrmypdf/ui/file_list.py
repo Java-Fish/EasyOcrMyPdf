@@ -20,8 +20,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui.i18n import tr
-from ocrmypdf_gui.models import Job, JobStatus
+from easyocrmypdf.i18n import tr
+from easyocrmypdf.models import Job, JobStatus
 
 # Symbol je Zustand, bewusst ohne Bilddateien, damit das Paket klein bleibt.
 _STATUS_ICON = {

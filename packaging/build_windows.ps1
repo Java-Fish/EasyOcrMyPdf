@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Baut "OCRmyPDF GUI.exe" und optional ein Installationsprogramm.
+    Baut "EasyOcrMyPdf.exe" und optional ein Installationsprogramm.
 
 .DESCRIPTION
     Aufruf in der PowerShell aus dem Projektverzeichnis:
@@ -22,7 +22,7 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $ProjectRoot
 
-$AppName = "OCRmyPDF GUI"
+$AppName = "EasyOcrMyPdf"
 $Venv = ".venv"
 
 # --- Virtuelle Umgebung vorbereiten ---------------------------------------
@@ -44,13 +44,17 @@ Write-Host "==> Generating icons"
 if ($Vendor) {
     Write-Host "==> Bundling Tesseract and Ghostscript"
     & $Python tools\vendor_windows.py
+} else {
+    # Ohne diese Variable bände die Spec einen aus einem früheren Lauf
+    # übriggebliebenen vendor-Ordner stillschweigend mit ein.
+    $env:EASYOCRMYPDF_NO_VENDOR = "1"
 }
 
 # --- Bauen -----------------------------------------------------------------
 Write-Host "==> Building the application"
 if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
 if (Test-Path "dist\$AppName") { Remove-Item -Recurse -Force "dist\$AppName" }
-& $Python -m PyInstaller packaging\ocrmypdf_gui.spec --noconfirm --distpath dist --workpath build
+& $Python -m PyInstaller packaging\easyocrmypdf.spec --noconfirm --distpath dist --workpath build
 
 $ExePath = "dist\$AppName\$AppName.exe"
 if (-not (Test-Path $ExePath)) {
@@ -70,9 +74,14 @@ if ($Installer) {
                        "    winget install -e --id JRSoftware.InnoSetup")
     } else {
         & $Inno "packaging\installer.iss"
-        Write-Host "    dist\OCRmyPDF-GUI-Setup.exe"
+        Write-Host "    dist\EasyOcrMyPdf-Setup.exe"
     }
 }
+
+# --- Prüfsummen ------------------------------------------------------------
+Write-Host "==> Writing checksums"
+& $Python tools\make_checksums.py | Out-Null
+Write-Host "    dist\sha.txt"
 
 $Size = "{0:N0} MB" -f ((Get-ChildItem "dist\$AppName" -Recurse -File |
         Measure-Object -Property Length -Sum).Sum / 1MB)

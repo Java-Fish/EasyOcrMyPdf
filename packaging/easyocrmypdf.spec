@@ -1,14 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller-Beschreibung für OCRmyPDF GUI.
+"""PyInstaller-Beschreibung für EasyOcrMyPdf.
 
 Aufruf (aus dem Projektverzeichnis):
-    pyinstaller packaging/ocrmypdf_gui.spec --noconfirm
+    pyinstaller packaging/easyocrmypdf.spec --noconfirm
 
 Das Ergebnis liegt unter ``dist/``:
-  * macOS   -> OCRmyPDF GUI.app
-  * Windows -> OCRmyPDF GUI/OCRmyPDF GUI.exe
+  * macOS   -> EasyOcrMyPdf.app
+  * Windows -> EasyOcrMyPdf/EasyOcrMyPdf.exe
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -18,9 +19,13 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy
 PROJECT_ROOT = Path(SPECPATH).resolve().parent  # noqa: F821
 IS_WINDOWS = sys.platform == "win32"
 IS_MACOS = sys.platform == "darwin"
+IS_LINUX = not IS_WINDOWS and not IS_MACOS
 
-APP_NAME = "OCRmyPDF GUI"
-BUNDLE_ID = "de.ocrmypdfgui.app"
+APP_NAME = "EasyOcrMyPdf"
+# Unter Linux sind Leerzeichen in Programmnamen unüblich und erschweren den
+# Aufruf aus der Shell; dort heißt die Datei deshalb "easyocrmypdf".
+BINARY_NAME = "easyocrmypdf" if IS_LINUX else APP_NAME
+BUNDLE_ID = "de.easyocrmypdf.app"
 VERSION = "1.0.0"
 
 # --- Mitgelieferte Dateien ------------------------------------------------
@@ -28,14 +33,14 @@ datas = []
 
 # OCRmyPDF und seine Abhängigkeiten bringen Daten und Metadaten mit, die zur
 # Laufzeit gelesen werden (Versionsabfragen, Plugin-Registrierung).
-for package in ("ocrmypdf", "pikepdf", "img2pdf", "pypdfium2", "pdfminer", "fpdf"):
+for package in ("ocrmypdf", "pikepdf", "img2pdf", "pypdfium2", "pdfminer", "fpdf", "certifi"):
     try:
         datas += collect_data_files(package)
     except Exception:
         pass
 for distribution in (
     "ocrmypdf", "pikepdf", "img2pdf", "pillow", "pluggy", "packaging",
-    "pypdfium2", "pdfminer.six", "rich", "fpdf2", "pydantic",
+    "pypdfium2", "pdfminer.six", "rich", "fpdf2", "pydantic", "certifi",
 ):
     try:
         datas += copy_metadata(distribution)
@@ -48,8 +53,13 @@ resources = PROJECT_ROOT / "resources"
 if (resources / "icon.png").is_file():
     datas.append((str(resources / "icon.png"), "resources"))
 
+# Ein vorhandener vendor-Ordner wird sonst auch dann eingebunden, wenn dieser
+# Build bewusst ohne mitgelieferte Programme entstehen soll. Die Build-Skripte
+# setzen die Variable, wenn ohne "--vendor" gebaut wird.
+skip_vendor = os.environ.get("EASYOCRMYPDF_NO_VENDOR") == "1"
+
 vendor_dir = PROJECT_ROOT / "vendor" / ("windows" if IS_WINDOWS else ("macos" if IS_MACOS else "linux"))
-if vendor_dir.is_dir() and any(vendor_dir.iterdir()):
+if not skip_vendor and vendor_dir.is_dir() and any(vendor_dir.iterdir()):
     # Zielpfad muss zu dependencies.vendor_root() passen.
     datas.append((str(vendor_dir), f"vendor/{vendor_dir.name}"))
 
@@ -71,6 +81,8 @@ hiddenimports = [
     "pikepdf",
     "pypdfium2",
     "multiprocessing.pool",
+    # Stammzertifikate für das Nachladen von Sprachdateien über HTTPS.
+    "certifi",
 ]
 
 # --- Nicht benötigte Pakete ausschließen, damit das Paket kleiner wird ----
@@ -100,6 +112,70 @@ analysis = Analysis(  # noqa: F821
     optimize=0,
 )
 
+# --- Ungenutzte Qt-Bestandteile entfernen ----------------------------------
+# PyInstaller nimmt über den PySide6-Hook das halbe Qt mit, auch Module, die
+# diese Anwendung nie verwendet. Das sind rund 24 MB, die das fertige Paket
+# unnötig aufblähen. Die Anwendung benutzt ausschließlich QtCore, QtGui und
+# QtWidgets; alles rund um QML, Quick, die Bildschirmtastatur und den
+# PDF-Betrachter von Qt kann entfallen.
+# Qt-Module, die diese Anwendung nicht verwendet. Angegeben ohne Präfix, weil
+# jede Plattform anders benennt:
+#   macOS    QtQuick.framework/Versions/A/QtQuick
+#   Linux    libQt6Quick.so.6
+#   Windows  Qt6Quick.dll
+UNUSED_QT_MODULES = {
+    "Pdf", "PdfQuick", "PdfWidgets",
+    "Quick", "Quick3D", "QuickControls2", "QuickWidgets", "QuickShapes",
+    "QuickTest", "QuickLayouts", "QuickDialogs2", "QuickTemplates2",
+    "QuickVectorImage", "QuickVectorImageGenerator",
+    "Qml", "QmlMeta", "QmlModels", "QmlWorkerScript", "QmlCore", "QmlLocalStorage",
+    "VirtualKeyboard", "VirtualKeyboardQml", "VirtualKeyboardSettings",
+}
+# Nicht entfernen, auch wenn es verlockend aussieht: QtGui verweist auf QtDBus,
+# ohne das die Anwendung nicht mehr startet. QtSvg und QtOpenGL brächten im
+# fertigen Paket praktisch nichts, weil sie sich sehr gut komprimieren lassen.
+
+# Einzelne Plugins, die ohne die oben entfernten Bibliotheken nutzlos sind.
+# Bleiben sie liegen, versucht Qt beim Start vergeblich, sie zu laden.
+UNUSED_QT_PLUGINS = (
+    "platforminputcontexts/libqtvirtualkeyboardplugin",
+    "imageformats/libqpdf",
+    "imageformats/qpdf",
+)
+
+
+def _qt_module_name(part):
+    """Schält den reinen Modulnamen aus einem Dateinamen, sonst None.
+
+    Beispiele: "libQt6Quick.so.6" -> "Quick", "Qt6Qml.dll" -> "Qml",
+    "QtQuick.framework" -> "Quick".
+    """
+    name = str(part).split(".")[0]
+    if name.startswith("lib"):
+        name = name[3:]
+    for praefix in ("Qt6", "Qt5", "Qt"):
+        if name.startswith(praefix) and len(name) > len(praefix):
+            return name[len(praefix):]
+    return None
+
+
+def _is_unused_qt(destination):
+    """True, wenn der Zielpfad zu einem nicht benötigten Qt-Modul gehört."""
+    text = str(destination).replace("\\", "/")
+    parts = Path(str(destination)).parts
+    if "qml" in parts:
+        return True
+    if any(marker in text for marker in UNUSED_QT_PLUGINS):
+        return True
+    return any(_qt_module_name(part) in UNUSED_QT_MODULES for part in parts)
+
+
+_before = len(analysis.binaries) + len(analysis.datas)
+analysis.binaries = [entry for entry in analysis.binaries if not _is_unused_qt(entry[0])]
+analysis.datas = [entry for entry in analysis.datas if not _is_unused_qt(entry[0])]
+print(f"Vendor mitgeliefert: {not skip_vendor and vendor_dir.is_dir()}")
+print(f"Qt-Filter: {_before - len(analysis.binaries) - len(analysis.datas)} Einträge entfernt")
+
 pyz = PYZ(analysis.pure)  # noqa: F821
 
 executable = EXE(  # noqa: F821
@@ -107,10 +183,10 @@ executable = EXE(  # noqa: F821
     analysis.scripts,
     [],
     exclude_binaries=True,
-    name=APP_NAME,
+    name=BINARY_NAME,
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=False,
     console=False,  # kein Konsolenfenster, die Anwendung ist rein grafisch
     disable_windowed_traceback=False,
@@ -118,17 +194,19 @@ executable = EXE(  # noqa: F821
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=str(resources / ("icon.ico" if IS_WINDOWS else "icon.icns")),
+    # ELF-Dateien tragen kein Symbol in sich; unter Linux übernimmt das die
+    # .desktop-Datei. PyInstaller würde eine fehlende Datei bemängeln.
+    icon=None if IS_LINUX else str(resources / ("icon.ico" if IS_WINDOWS else "icon.icns")),
 )
 
 collection = COLLECT(  # noqa: F821
     executable,
     analysis.binaries,
     analysis.datas,
-    strip=False,
+    strip=True,
     upx=False,
     upx_exclude=[],
-    name=APP_NAME,
+    name=BINARY_NAME,
 )
 
 if IS_MACOS:

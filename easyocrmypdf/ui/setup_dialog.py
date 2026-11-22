@@ -16,9 +16,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui.dependencies import DependencyReport, ToolStatus, check_dependencies
-from ocrmypdf_gui.i18n import tr
-from ocrmypdf_gui.ui.widgets import Card, horizontal_separator
+from easyocrmypdf.dependencies import DependencyReport, ToolStatus, check_dependencies
+from easyocrmypdf.i18n import tr
+from easyocrmypdf.ui.widgets import Card, horizontal_separator
 
 # Installationshinweise je Werkzeug und Betriebssystem.
 # Erste Zeile: Befehl zum Kopieren. Zweite: Seite zum Herunterladen.

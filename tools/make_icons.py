@@ -10,6 +10,7 @@ Ergebnis: resources/icon.png, resources/icon.icns (macOS), resources/icon.ico
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -26,6 +27,10 @@ from PySide6.QtGui import (
     QPen,
 )
 from PySide6.QtWidgets import QApplication
+
+# Auf einem Build-Rechner ohne Bildschirm gäbe es sonst keine Qt-Plattform.
+# Das Zeichnen selbst braucht kein Fenster.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESOURCES = PROJECT_ROOT / "resources"

@@ -14,6 +14,7 @@ from PySide6.QtGui import (
     QDropEvent,
 )
 from PySide6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QFileDialog,
     QHBoxLayout,
@@ -28,14 +29,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui import __app_name__, config
-from ocrmypdf_gui.i18n import tr
-from ocrmypdf_gui.models import ExportSettings, JobStatus, OutputMode
-from ocrmypdf_gui.runner import JobResult, OcrRunner
-from ocrmypdf_gui.ui.drop_area import DropArea, split_pdf_paths, paths_from_mime
-from ocrmypdf_gui.ui.file_list import FileListPanel
-from ocrmypdf_gui.ui.settings_panel import SettingsPanel
-from ocrmypdf_gui.ui.widgets import Card, CollapsibleSection, value_label
+from easyocrmypdf import __app_name__, config
+from easyocrmypdf.i18n import tr
+from easyocrmypdf.models import ExportSettings, JobStatus, OutputMode
+from easyocrmypdf.runner import JobResult, OcrRunner
+from easyocrmypdf.ui.drop_area import DropArea, split_pdf_paths, paths_from_mime
+from easyocrmypdf.ui.file_list import FileListPanel
+from easyocrmypdf.ui.settings_panel import SettingsPanel
+from easyocrmypdf.ui.widgets import Card, CollapsibleSection, value_label
 
 # Wie viele Protokollzeilen höchstens vorgehalten werden.
 _MAX_LOG_LINES = 4000
@@ -68,6 +69,14 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._retranslate()
         self._update_controls()
+
+        # Wird die Anwendung beendet, ohne dass das Fenster geschlossen wird
+        # (etwa über das Programmmenü), läuft closeEvent nicht. Ohne diese
+        # Absicherung würde der Arbeits-Thread beim Abräumen noch laufen, was
+        # Qt mit "QThread: Destroyed while thread is still running" quittiert.
+        anwendung = QApplication.instance()
+        if anwendung is not None:
+            anwendung.aboutToQuit.connect(self._stop_runner)
 
     # ------------------------------------------------------------------
     # Aufbau
@@ -431,7 +440,7 @@ class MainWindow(QMainWindow):
     def _save_log(self) -> None:
         """Schreibt das vollständige Protokoll in eine Datei."""
         name, _filter = QFileDialog.getSaveFileName(
-            self, tr("log.saveDialog"), str(Path.home() / "ocrmypdf-gui-log.txt"), "*.txt"
+            self, tr("log.saveDialog"), str(Path.home() / "easyocrmypdf-log.txt"), "*.txt"
         )
         if not name:
             return
@@ -531,6 +540,15 @@ class MainWindow(QMainWindow):
         if rejected:
             self._warn_rejected(rejected)
 
+    def _stop_runner(self) -> None:
+        """Bricht eine laufende Verarbeitung ab und wartet auf ihr Ende."""
+        if self._runner is None:
+            return
+        if self._runner.isRunning():
+            self._runner.cancel()
+            self._runner.wait(5000)
+        self._running = False
+
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802
         """Fragt nach, wenn beim Schließen noch eine Verarbeitung läuft."""
         if self._running and self._runner is not None:
@@ -544,8 +562,7 @@ class MainWindow(QMainWindow):
             if answer != QMessageBox.StandardButton.Yes:
                 event.ignore()
                 return
-            self._runner.cancel()
-            self._runner.wait(5000)
+            self._stop_runner()
 
         config.save_settings(self._settings_panel.settings)
         super().closeEvent(event)

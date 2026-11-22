@@ -153,6 +153,13 @@ def tessdata_dir() -> Optional[Path]:
     zuverlässigste Weg und vermeidet, dass wir versehentlich einen Ordner mit
     weniger Sprachpaketen erzwingen.
     """
+    # Hat der Nutzer Sprachen nachinstalliert, liegt der vollständige Bestand
+    # im Benutzerprofil; der Ordner im Programmpaket ist dann veraltet.
+    from easyocrmypdf import tessdata
+
+    if tessdata.is_user_dir_active():
+        return tessdata.user_tessdata_dir()
+
     bundled = vendor_root() / "share" / "tessdata"
     if bundled.is_dir():
         return bundled

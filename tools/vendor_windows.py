@@ -10,8 +10,9 @@ Voraussetzung: Tesseract und Ghostscript sind installiert, z. B. mit
     winget install -e --id ArtifexSoftware.GhostScript
 
 Aufruf:
-    python tools\\vendor_windows.py                      # gängige Sprachen
-    python tools\\vendor_windows.py --languages all       # alle installierten Sprachen
+    python tools\\vendor_windows.py                        # Deutsch und Englisch
+    python tools\\vendor_windows.py --languages european   # 26 europäische Sprachen
+    python tools\\vendor_windows.py --languages all        # alle installierten
     python tools\\vendor_windows.py --tesseract "C:\\Pfad" --ghostscript "C:\\Pfad"
 """
 
@@ -27,8 +28,21 @@ from typing import List, Optional, Set
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 VENDOR = PROJECT_ROOT / "vendor" / "windows"
 
-# Voreinstellung: die in Europa gebräuchlichen Sprachen (siehe tools/vendor_macos.py).
-COMMON_LANGUAGES = (
+# Sprachpakete, die in die fertigen Pakete eingebettet werden.
+#
+# "standard" ist die Voreinstellung und enthält nur Deutsch und Englisch. Das
+# hält das Paket klein genug, um es als Release-Artefakt hochladen zu können
+# (Codeberg nimmt höchstens 100 MB je Datei). Alle übrigen Sprachen lassen sich
+# jederzeit nachinstallieren; die Anwendung zeigt automatisch an, was vorhanden
+# ist.
+#
+# "osd" ist keine Sprache, sondern das Modell zur Erkennung von Schriftrichtung
+# und Schriftsystem. Ohne dieses Modell scheitert die Einstellung "Seiten
+# automatisch drehen".
+STANDARD_LANGUAGES = ("deu", "eng", "osd")
+
+# Die in Europa gebräuchlichen Sprachen, für ein bewusst größeres Paket.
+EUROPEAN_LANGUAGES = (
     "deu", "deu_latf", "eng", "fra", "spa", "ita", "nld", "por", "pol",
     "ces", "dan", "swe", "nor", "fin", "hun", "ron", "tur", "rus", "ell",
     "ukr", "slk", "slv", "hrv", "bul", "cat", "lat", "osd",
@@ -72,10 +86,13 @@ def copy_tree(source: Path, destination: Path) -> int:
 
 def parse_languages(value: str) -> Optional[Set[str]]:
     """Wertet die Option ``--languages`` aus. ``None`` bedeutet: alle."""
-    if value.strip().lower() == "all":
+    chosen = value.strip().lower()
+    if chosen == "all":
         return None
-    if value.strip().lower() == "common":
-        return set(COMMON_LANGUAGES)
+    if chosen == "standard":
+        return set(STANDARD_LANGUAGES)
+    if chosen == "european":
+        return set(EUROPEAN_LANGUAGES)
     return {code.strip() for code in value.split(",") if code.strip()}
 
 
@@ -90,8 +107,9 @@ def main() -> int:
     parser.add_argument("--ghostscript", type=Path, help="Ghostscript installation folder")
     parser.add_argument(
         "--languages",
-        default="common",
-        help='"common" (default), "all", or a comma-separated list such as "deu,eng"',
+        default="standard",
+        help='"standard" (Vorgabe: deu, eng, osd), "european", "all" '
+             'oder eine Liste wie "deu,eng,fra"',
     )
     arguments = parser.parse_args()
 
@@ -129,7 +147,7 @@ def main() -> int:
     print(f"  {size / 1024 / 1024:.0f} MB")
 
     # Die Sprachdateien liegen bei Tesseract unter tessdata/ und werden von
-    # dependencies.tessdata_dir() unter vendor\\windows\\share\\tessdata erwartet.
+    # dependencies.tessdata_dir() unter vendor\windows\share\tessdata erwartet.
     tessdata_source = VENDOR / "tesseract" / "tessdata"
     if tessdata_source.is_dir():
         wanted = parse_languages(arguments.languages)
@@ -153,13 +171,23 @@ def main() -> int:
         font = tessdata_source / "pdf.ttf"
         if font.is_file():
             shutil.copy2(font, target / font.name)
-        # Die Kopie unter tesseract\\tessdata wäre doppelter Ballast.
+
+        # Die Kopie unter tesseract\tessdata wäre doppelter Ballast.
         shutil.rmtree(tessdata_source, ignore_errors=True)
         print(f"Language files: {count}")
 
+        if wanted is not None:
+            missing = sorted(wanted - {f.stem for f in target.glob("*.traineddata")})
+            if missing:
+                print(
+                    f"  note: not installed, skipped: {', '.join(missing)}\n"
+                    f"        (add them via the Tesseract installer)",
+                    file=sys.stderr,
+                )
+
     total = sum(f.stat().st_size for f in VENDOR.rglob("*") if f.is_file())
     print(f"\nDone: {VENDOR}  ({total / 1024 / 1024:.0f} MB)")
-    print("Now run:  pyinstaller packaging\\ocrmypdf_gui.spec --noconfirm")
+    print("Now run:  pyinstaller packaging\\easyocrmypdf.spec --noconfirm")
     return 0
 
 
