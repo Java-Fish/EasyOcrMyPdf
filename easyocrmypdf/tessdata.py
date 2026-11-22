@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
-from ocrmypdf_gui.config import config_directory
+from easyocrmypdf.config import config_directory
 
 # Name des Ordners im Benutzerprofil, der die Sprachdateien aufnimmt.
 USER_TESSDATA_NAME = "tessdata"
@@ -166,7 +166,7 @@ def _opener() -> urllib.request.OpenerDirector:
     handler = urllib.request.HTTPSHandler(context=kontext)
     opener = urllib.request.build_opener(handler)
     # GitHub weist Anfragen ohne Kennung teilweise ab.
-    opener.addheaders = [("User-Agent", "OCRmyPDF-GUI")]
+    opener.addheaders = [("User-Agent", "EasyOcrMyPdf")]
     return opener
 
 

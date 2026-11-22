@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui.i18n import tr
+from easyocrmypdf.i18n import tr
 
 PDF_SUFFIX = ".pdf"
 

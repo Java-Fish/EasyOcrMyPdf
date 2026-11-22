@@ -330,7 +330,7 @@ def main() -> int:
 
     size = sum(f.stat().st_size for f in VENDOR.rglob("*") if f.is_file())
     print(f"\nDone: {VENDOR}  ({size / 1024 / 1024:.0f} MB)")
-    print("Now run:  pyinstaller packaging/ocrmypdf_gui.spec --noconfirm")
+    print("Now run:  pyinstaller packaging/easyocrmypdf.spec --noconfirm")
     return 0
 
 

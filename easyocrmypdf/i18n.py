@@ -349,8 +349,8 @@ _STRINGS: Dict[str, Dict[str, str]] = {
     # --- Einrichtungsdialog ---------------------------------------------
     "setup.title": {"de": "Einrichtung", "en": "Setup"},
     "setup.intro": {
-        "de": "OCRmyPDF GUI benötigt zwei Hilfsprogramme. Es fehlt noch etwas:",
-        "en": "OCRmyPDF GUI needs two helper programs. Something is still missing:",
+        "de": "EasyOcrMyPdf benötigt zwei Hilfsprogramme. Es fehlt noch etwas:",
+        "en": "EasyOcrMyPdf needs two helper programs. Something is still missing:",
     },
     "setup.allGood": {"de": "Alles bereit.", "en": "Everything is ready."},
     "setup.found": {"de": "gefunden", "en": "found"},

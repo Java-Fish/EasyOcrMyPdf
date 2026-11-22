@@ -19,8 +19,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui import languages as language_names
-from ocrmypdf_gui.i18n import tr
+from easyocrmypdf import languages as language_names
+from easyocrmypdf.i18n import tr
 
 
 class LanguageDialog(QDialog):
@@ -113,7 +113,7 @@ class LanguageDialog(QDialog):
 
     def _open_download_dialog(self) -> None:
         """Öffnet die Sprachverwaltung und baut die Liste danach neu auf."""
-        from ocrmypdf_gui.ui.download_dialog import DownloadDialog
+        from easyocrmypdf.ui.download_dialog import DownloadDialog
 
         dialog = DownloadDialog(self)
         dialog.exec()
@@ -122,7 +122,7 @@ class LanguageDialog(QDialog):
 
     def _rebuild_list(self) -> None:
         """Baut die Auswahlliste neu auf, ohne die Auswahl zu verlieren."""
-        from ocrmypdf_gui import dependencies
+        from easyocrmypdf import dependencies
 
         chosen = set(self.selected_languages())
         self._list.clear()

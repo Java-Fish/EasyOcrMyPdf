@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Baut OCRmyPDF GUI für Linux.
+# Baut EasyOcrMyPdf für Linux.
 #
 #   ./packaging/build_linux.sh              # Programmordner und .tar.gz
 #   ./packaging/build_linux.sh --vendor     # Tesseract/Ghostscript mitliefern
@@ -13,8 +13,8 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-APP_NAME="OCRmyPDF GUI"
-BINARY_NAME="ocrmypdf-gui"
+APP_NAME="EasyOcrMyPdf"
+BINARY_NAME="easyocrmypdf"
 # Der Ordner lässt sich über die Umgebung überschreiben. Im Docker-Abbild
 # liegt er außerhalb des Projekts, weil dort bereits ein .venv für macOS
 # eingehängt sein kann.
@@ -58,13 +58,13 @@ if [ "$DO_VENDOR" -eq 1 ]; then
 else
   # Ohne diese Variable bände die Spec einen aus einem früheren Lauf
   # übriggebliebenen vendor-Ordner stillschweigend mit ein.
-  export OCRMYPDF_GUI_NO_VENDOR=1
+  export EASYOCRMYPDF_NO_VENDOR=1
 fi
 
 # --- Bauen -----------------------------------------------------------------
 echo "==> Building the application"
 rm -rf build "dist/$BINARY_NAME"
-"$PYTHON" -m PyInstaller packaging/ocrmypdf_gui.spec --noconfirm --distpath dist --workpath build
+"$PYTHON" -m PyInstaller packaging/easyocrmypdf.spec --noconfirm --distpath dist --workpath build
 
 if [ ! -x "dist/$BINARY_NAME/$BINARY_NAME" ]; then
   echo "Build failed: dist/$BINARY_NAME/$BINARY_NAME was not created" >&2
@@ -72,12 +72,12 @@ if [ ! -x "dist/$BINARY_NAME/$BINARY_NAME" ]; then
 fi
 
 # --- Startskript und Desktop-Eintrag für die Installation von Hand ---------
-install -m 644 packaging/ocrmypdf-gui.desktop "dist/$BINARY_NAME/"
-install -m 644 resources/icon.png "dist/$BINARY_NAME/ocrmypdf-gui.png"
+install -m 644 packaging/easyocrmypdf.desktop "dist/$BINARY_NAME/"
+install -m 644 resources/icon.png "dist/$BINARY_NAME/easyocrmypdf.png"
 
 # --- Archiv ----------------------------------------------------------------
 echo "==> Creating archive"
-ARCHIVE="dist/OCRmyPDF-GUI-linux-$(uname -m).tar.gz"
+ARCHIVE="dist/EasyOcrMyPdf-linux-$(uname -m).tar.gz"
 rm -f "$ARCHIVE"
 tar -czf "$ARCHIVE" -C dist "$BINARY_NAME"
 echo "    $ARCHIVE"
@@ -97,22 +97,22 @@ if [ "$MAKE_APPIMAGE" -eq 1 ]; then
              "$APPDIR/usr/share/icons/hicolor/512x512/apps"
 
     cp -R "dist/$BINARY_NAME/." "$APPDIR/usr/bin/"
-    install -m 644 packaging/ocrmypdf-gui.desktop \
-      "$APPDIR/usr/share/applications/ocrmypdf-gui.desktop"
-    install -m 644 packaging/ocrmypdf-gui.desktop "$APPDIR/ocrmypdf-gui.desktop"
+    install -m 644 packaging/easyocrmypdf.desktop \
+      "$APPDIR/usr/share/applications/easyocrmypdf.desktop"
+    install -m 644 packaging/easyocrmypdf.desktop "$APPDIR/easyocrmypdf.desktop"
     install -m 644 resources/icon.png \
-      "$APPDIR/usr/share/icons/hicolor/512x512/apps/ocrmypdf-gui.png"
-    install -m 644 resources/icon.png "$APPDIR/ocrmypdf-gui.png"
+      "$APPDIR/usr/share/icons/hicolor/512x512/apps/easyocrmypdf.png"
+    install -m 644 resources/icon.png "$APPDIR/easyocrmypdf.png"
 
     # AppRun ist der Einstiegspunkt der AppImage.
     cat > "$APPDIR/AppRun" <<'APPRUN'
 #!/bin/sh
 HERE="$(dirname "$(readlink -f "$0")")"
-exec "$HERE/usr/bin/ocrmypdf-gui" "$@"
+exec "$HERE/usr/bin/easyocrmypdf" "$@"
 APPRUN
     chmod +x "$APPDIR/AppRun"
 
-    APPIMAGE="dist/OCRmyPDF-GUI-$(uname -m).AppImage"
+    APPIMAGE="dist/EasyOcrMyPdf-$(uname -m).AppImage"
     RUNTIME="/usr/local/share/appimage-runtime"
     rm -f "$APPIMAGE"
 

@@ -18,8 +18,8 @@ from typing import List, Optional, Sequence
 
 from PySide6.QtCore import QThread, Signal
 
-from ocrmypdf_gui import dependencies
-from ocrmypdf_gui.models import ExportSettings, Job, JobStatus
+from easyocrmypdf import dependencies
+from easyocrmypdf.models import ExportSettings, Job, JobStatus
 
 # Verhindert das kurze Aufblitzen eines Konsolenfensters unter Windows.
 _CREATION_FLAGS = 0x08000000 if sys.platform == "win32" else 0

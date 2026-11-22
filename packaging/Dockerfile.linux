@@ -1,4 +1,4 @@
-# Baut OCRmyPDF GUI für Linux in einer reproduzierbaren Umgebung.
+# Baut EasyOcrMyPdf für Linux in einer reproduzierbaren Umgebung.
 #
 # Absichtlich Ubuntu 22.04 und nicht die neueste Fassung: Die glibc des
 # Build-Systems bestimmt, ab welcher Distribution das Ergebnis läuft. 22.04

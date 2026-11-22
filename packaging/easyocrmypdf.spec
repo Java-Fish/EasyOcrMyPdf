@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller-Beschreibung für OCRmyPDF GUI.
+"""PyInstaller-Beschreibung für EasyOcrMyPdf.
 
 Aufruf (aus dem Projektverzeichnis):
-    pyinstaller packaging/ocrmypdf_gui.spec --noconfirm
+    pyinstaller packaging/easyocrmypdf.spec --noconfirm
 
 Das Ergebnis liegt unter ``dist/``:
-  * macOS   -> OCRmyPDF GUI.app
-  * Windows -> OCRmyPDF GUI/OCRmyPDF GUI.exe
+  * macOS   -> EasyOcrMyPdf.app
+  * Windows -> EasyOcrMyPdf/EasyOcrMyPdf.exe
 """
 
 import os
@@ -21,11 +21,11 @@ IS_WINDOWS = sys.platform == "win32"
 IS_MACOS = sys.platform == "darwin"
 IS_LINUX = not IS_WINDOWS and not IS_MACOS
 
-APP_NAME = "OCRmyPDF GUI"
+APP_NAME = "EasyOcrMyPdf"
 # Unter Linux sind Leerzeichen in Programmnamen unüblich und erschweren den
-# Aufruf aus der Shell; dort heißt die Datei deshalb "ocrmypdf-gui".
-BINARY_NAME = "ocrmypdf-gui" if IS_LINUX else APP_NAME
-BUNDLE_ID = "de.ocrmypdfgui.app"
+# Aufruf aus der Shell; dort heißt die Datei deshalb "easyocrmypdf".
+BINARY_NAME = "easyocrmypdf" if IS_LINUX else APP_NAME
+BUNDLE_ID = "de.easyocrmypdf.app"
 VERSION = "0.0.2"
 
 # --- Mitgelieferte Dateien ------------------------------------------------
@@ -56,7 +56,7 @@ if (resources / "icon.png").is_file():
 # Ein vorhandener vendor-Ordner wird sonst auch dann eingebunden, wenn dieser
 # Build bewusst ohne mitgelieferte Programme entstehen soll. Die Build-Skripte
 # setzen die Variable, wenn ohne "--vendor" gebaut wird.
-skip_vendor = os.environ.get("OCRMYPDF_GUI_NO_VENDOR") == "1"
+skip_vendor = os.environ.get("EASYOCRMYPDF_NO_VENDOR") == "1"
 
 vendor_dir = PROJECT_ROOT / "vendor" / ("windows" if IS_WINDOWS else ("macos" if IS_MACOS else "linux"))
 if not skip_vendor and vendor_dir.is_dir() and any(vendor_dir.iterdir()):

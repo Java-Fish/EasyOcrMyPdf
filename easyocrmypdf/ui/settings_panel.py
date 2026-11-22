@@ -20,10 +20,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ocrmypdf_gui import dependencies
-from ocrmypdf_gui import languages as language_names
-from ocrmypdf_gui.i18n import SUPPORTED_UI_LANGUAGES, tr
-from ocrmypdf_gui.models import (
+from easyocrmypdf import dependencies
+from easyocrmypdf import languages as language_names
+from easyocrmypdf.i18n import SUPPORTED_UI_LANGUAGES, tr
+from easyocrmypdf.models import (
     DEFAULT_OPTIMIZE_LEVEL,
     IMAGE_DPI_RANGE,
     JOBS_RANGE,
@@ -34,8 +34,8 @@ from ocrmypdf_gui.models import (
     OutputMode,
     PdfType,
 )
-from ocrmypdf_gui.ui.language_dialog import LanguageDialog
-from ocrmypdf_gui.ui.widgets import Card, CollapsibleSection, Field, horizontal_separator
+from easyocrmypdf.ui.language_dialog import LanguageDialog
+from easyocrmypdf.ui.widgets import Card, CollapsibleSection, Field, horizontal_separator
 
 # Reihenfolge der Optimierungsstufen in der Auswahlliste.
 _OPTIMIZE_LEVELS = (0, 1, 2, 3)

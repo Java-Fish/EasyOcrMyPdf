@@ -1,16 +1,16 @@
-; Inno-Setup-Beschreibung für OCRmyPDF GUI.
+; Inno-Setup-Beschreibung für EasyOcrMyPdf.
 ;
 ; Erzeugt ein Installationsprogramm, das die Anwendung nach
-; "Programme\OCRmyPDF GUI" legt, Verknüpfungen anlegt und sich über
+; "Programme\EasyOcrMyPdf" legt, Verknüpfungen anlegt und sich über
 ; "Apps & Features" wieder entfernen lässt.
 ;
 ; Bauen:  ISCC.exe packaging\installer.iss
-; (setzt voraus, dass build_windows.ps1 zuvor dist\OCRmyPDF GUI erzeugt hat)
+; (setzt voraus, dass build_windows.ps1 zuvor dist\EasyOcrMyPdf erzeugt hat)
 
-#define AppName "OCRmyPDF GUI"
+#define AppName "EasyOcrMyPdf"
 #define AppVersion "0.0.2"
-#define AppPublisher "OCRmyPDF GUI"
-#define AppExeName "OCRmyPDF GUI.exe"
+#define AppPublisher "EasyOcrMyPdf"
+#define AppExeName "EasyOcrMyPdf.exe"
 
 [Setup]
 AppId={{7B2F4C1E-9A3D-4E56-8C71-2D9F5A6B3E14}
@@ -21,7 +21,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 OutputDir=..\dist
-OutputBaseFilename=OCRmyPDF-GUI-Setup
+OutputBaseFilename=EasyOcrMyPdf-Setup
 SetupIconFile=..\resources\icon.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 Compression=lzma2/max

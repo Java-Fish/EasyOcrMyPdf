@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Baut "OCRmyPDF GUI.app" und optional ein DMG zum Weitergeben.
+# Baut "EasyOcrMyPdf.app" und optional ein DMG zum Weitergeben.
 #
 #   ./packaging/build_macos.sh            # nur die .app
 #   ./packaging/build_macos.sh --dmg      # zusätzlich ein DMG
@@ -10,8 +10,8 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-APP_NAME="OCRmyPDF GUI"
-DMG_NAME="OCRmyPDF-GUI.dmg"
+APP_NAME="EasyOcrMyPdf"
+DMG_NAME="EasyOcrMyPdf.dmg"
 VENV=".venv"
 MAKE_DMG=0
 DO_VENDOR=0
@@ -47,13 +47,13 @@ if [ "$DO_VENDOR" -eq 1 ]; then
 else
   # Ohne diese Variable bände die Spec einen aus einem früheren Lauf
   # übriggebliebenen vendor-Ordner stillschweigend mit ein.
-  export OCRMYPDF_GUI_NO_VENDOR=1
+  export EASYOCRMYPDF_NO_VENDOR=1
 fi
 
 # --- Bauen -----------------------------------------------------------------
 echo "==> Building the application"
 rm -rf build "dist/$APP_NAME.app" "dist/$APP_NAME"
-"$PYTHON" -m PyInstaller packaging/ocrmypdf_gui.spec --noconfirm --distpath dist --workpath build
+"$PYTHON" -m PyInstaller packaging/easyocrmypdf.spec --noconfirm --distpath dist --workpath build
 
 if [ ! -d "dist/$APP_NAME.app" ]; then
   echo "Build failed: dist/$APP_NAME.app was not created" >&2

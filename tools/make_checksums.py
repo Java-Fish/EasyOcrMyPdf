@@ -100,7 +100,7 @@ def build_report(dist: Path) -> str:
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     lines: List[str] = [
-        "# SHA-256-Prüfsummen der Build-Ergebnisse von OCRmyPDF GUI",
+        "# SHA-256-Prüfsummen der Build-Ergebnisse von EasyOcrMyPdf",
         f"# Erzeugt am {stamp}",
         "#",
         "# Prüfen unter macOS und Linux:",

@@ -1,10 +1,10 @@
-# OCRmyPDF GUI
+# EasyOcrMyPdf
 
 Eine einfach zu bedienende Oberfläche für [OCRmyPDF](https://ocrmypdf.readthedocs.io/)
 und [Tesseract](https://tesseract-ocr.github.io/). Sie macht eingescannte PDF-Dateien
 durchsuchbar, per Doppelklick gestartet und ganz ohne Kommandozeile.
 
-![Das Hauptfenster von OCRmyPDF GUI](docs/screenshot.png)
+![Das Hauptfenster von EasyOcrMyPdf](docs/screenshot.png)
 
 **Was die Anwendung kann**
 
@@ -37,13 +37,13 @@ durchsuchbar, per Doppelklick gestartet und ganz ohne Kommandozeile.
 ## 1. Schnellstart
 
 Dieser Abschnitt setzt voraus, dass Sie die fertige Anwendung aus den
-[Releases](https://codeberg.org/nabu-jena/OCRmyPDF-GUI/releases) heruntergeladen
+[Releases](https://github.com/Java-Fish/EasyOcrMyPdf/releases) heruntergeladen
 haben. Sie brauchen weder Python noch sonst eine Vorinstallation.
 
 ### macOS
 
-1. `OCRmyPDF-GUI.dmg` doppelklicken.
-2. Das Symbol **OCRmyPDF GUI** in den Ordner **Programme** ziehen.
+1. `EasyOcrMyPdf-macos-arm64.dmg` doppelklicken (für Macs mit Apple-Chip).
+2. Das Symbol **EasyOcrMyPdf** in den Ordner **Programme** ziehen.
 3. Im Ordner **Programme** mit der **rechten Maustaste** auf die App klicken,
    **Öffnen** wählen und die Rückfrage bestätigen.
    Dieser eine Umweg ist nötig, weil die App nicht bei Apple registriert ist.
@@ -51,24 +51,25 @@ haben. Sie brauchen weder Python noch sonst eine Vorinstallation.
 
 ### Windows
 
-1. `OCRmyPDF-GUI-Setup.exe` ausführen und dem Assistenten folgen.
+1. `EasyOcrMyPdf-windows-x64-Setup.exe` ausführen und dem Assistenten folgen.
 2. Meldet SmartScreen „Der Computer wurde durch Windows geschützt“, auf
    **Weitere Informationen** und dann **Trotzdem ausführen** klicken.
 3. Die Anwendung über das Startmenü öffnen.
 
-Wer nichts installieren möchte, nimmt stattdessen das ZIP-Archiv, entpackt es an
-einen beliebigen Ort und startet darin `OCRmyPDF GUI.exe`.
+Wer nichts installieren möchte, nimmt stattdessen `EasyOcrMyPdf-windows-x64.zip`, entpackt es an
+einen beliebigen Ort und startet darin `EasyOcrMyPdf.exe`.
 
 ### Linux
 
-1. Die Datei `OCRmyPDF-GUI-x86_64.AppImage` herunterladen.
+1. Die Datei `EasyOcrMyPdf-x86_64.AppImage` herunterladen
+   (auf ARM-Rechnern wie dem Raspberry Pi `EasyOcrMyPdf-aarch64.AppImage`).
 2. Einmalig ausführbar machen, entweder im Dateimanager über
    *Eigenschaften → Zugriffsrechte → Ausführen erlauben* oder im Terminal mit
-   `chmod +x OCRmyPDF-GUI-x86_64.AppImage`.
+   `chmod +x EasyOcrMyPdf-x86_64.AppImage`.
 3. Per Doppelklick starten.
 
 Alternativ gibt es ein `.tar.gz`. Es wird an einen beliebigen Ort entpackt und
-darin `ocrmypdf-gui` gestartet.
+darin `easyocrmypdf` gestartet.
 
 ### In drei Schritten zur durchsuchbaren PDF
 
@@ -131,8 +132,8 @@ Dieser Abschnitt erklärt, was dabei im Hintergrund passiert.
 
 | System | Ort | Entfernen |
 |---|---|---|
-| macOS | `/Programme/OCRmyPDF GUI.app` | App in den Papierkorb ziehen |
-| Windows (Setup) | `C:\Program Files\OCRmyPDF GUI` | *Einstellungen → Apps → OCRmyPDF GUI* |
+| macOS | `/Programme/EasyOcrMyPdf.app` | App in den Papierkorb ziehen |
+| Windows (Setup) | `C:\Program Files\EasyOcrMyPdf` | *Einstellungen → Apps → EasyOcrMyPdf* |
 | Windows (ZIP) | beliebiger Ordner | Ordner löschen |
 | Linux (AppImage) | beliebiger Ordner | Datei löschen |
 | Linux (tar.gz) | beliebiger Ordner | Ordner löschen |
@@ -148,17 +149,18 @@ lässt sich feststellen, ob eine heruntergeladene Datei vollständig und
 unverändert ist:
 
 ```bash
-# macOS und Linux, im Ordner mit der Datei und sha.txt
-shasum -a 256 -c sha.txt
+# macOS und Linux, im Ordner mit der Datei und SHA256SUMS.txt
+shasum -a 256 -c --ignore-missing SHA256SUMS.txt
 ```
 
 ```powershell
 # Windows
-Get-FileHash .\OCRmyPDF-GUI-Setup.exe -Algorithm SHA256
+Get-FileHash .\EasyOcrMyPdf-windows-x64-Setup.exe -Algorithm SHA256
 ```
 
 Erwartet wird die Ausgabe `OK` beziehungsweise ein Wert, der mit dem Eintrag in
-`sha.txt` übereinstimmt. Das Programmbündel `OCRmyPDF GUI.app` ist ein Ordner
+`SHA256SUMS.txt` übereinstimmt. Bei einem eigenen Build schreiben die
+Build-Skripte die Prüfsummen nach `dist/sha.txt`. Das Programmbündel `EasyOcrMyPdf.app` ist ein Ordner
 und lässt sich nicht als einzelne Datei prüfen; sein Wert steht in `sha.txt` als
 Kommentar und wird mit `python tools/make_checksums.py` nachgerechnet.
 
@@ -257,9 +259,9 @@ Die Dateien landen im Benutzerprofil, nicht im Programmordner:
 
 | System | Ort |
 |---|---|
-| macOS | `~/Library/Application Support/OCRmyPDF-GUI/tessdata` |
-| Windows | `%APPDATA%\OCRmyPDF-GUI\tessdata` |
-| Linux | `~/.config/OCRmyPDF-GUI/tessdata` |
+| macOS | `~/Library/Application Support/EasyOcrMyPdf/tessdata` |
+| Windows | `%APPDATA%\EasyOcrMyPdf\tessdata` |
+| Linux | `~/.config/EasyOcrMyPdf/tessdata` |
 
 Beim ersten Download übernimmt die Anwendung die mitgelieferten Sprachen
 dorthin, denn der Ordner im Programmpaket ist schreibgeschützt. Eine
@@ -306,9 +308,9 @@ wiederhergestellt. Die Datei liegt hier:
 
 | System | Pfad |
 |---|---|
-| macOS | `~/Library/Application Support/OCRmyPDF-GUI/settings.json` |
-| Windows | `%APPDATA%\OCRmyPDF-GUI\settings.json` |
-| Linux | `~/.config/OCRmyPDF-GUI/settings.json` |
+| macOS | `~/Library/Application Support/EasyOcrMyPdf/settings.json` |
+| Windows | `%APPDATA%\EasyOcrMyPdf\settings.json` |
+| Linux | `~/.config/EasyOcrMyPdf/settings.json` |
 
 Es ist eine einfache JSON-Datei, die sich bei Bedarf mit einem Texteditor
 bearbeiten lässt:
@@ -414,8 +416,8 @@ Protokoll bei Bedarf über *Protokoll speichern* sichern.
 ### Im Entwicklungsmodus starten
 
 ```bash
-git clone <repository-url>
-cd OCRmyPDF-GUI
+git clone https://github.com/Java-Fish/EasyOcrMyPdf.git
+cd EasyOcrMyPdf
 
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
@@ -433,7 +435,7 @@ brew install tesseract tesseract-lang ghostscript pngquant jbig2enc
 ./packaging/build_macos.sh --vendor --dmg
 ```
 
-Ergebnis: `dist/OCRmyPDF GUI.app` und `dist/OCRmyPDF-GUI.dmg`.
+Ergebnis: `dist/EasyOcrMyPdf.app` und `dist/EasyOcrMyPdf.dmg`.
 
 | Option | Wirkung |
 |---|---|
@@ -451,7 +453,7 @@ winget install -e --id JRSoftware.InnoSetup    # nur für das Installationsprogr
 .\packaging\build_windows.ps1 -Vendor -Installer
 ```
 
-Ergebnis: `dist\OCRmyPDF GUI\OCRmyPDF GUI.exe` und `dist\OCRmyPDF-GUI-Setup.exe`.
+Ergebnis: `dist\EasyOcrMyPdf\EasyOcrMyPdf.exe` und `dist\EasyOcrMyPdf-Setup.exe`.
 
 `-Vendor` liefert unter Windows nur Tesseract und Ghostscript mit; pngquant
 und jbig2enc gibt es dort nicht als fertige Pakete. Die Optimierungsstufen
@@ -466,9 +468,9 @@ sudo apt install pngquant          # optional, für starke Größenoptimierung
 ./packaging/build_linux.sh --vendor --appimage
 ```
 
-Ergebnis: `dist/ocrmypdf-gui/` als Programmordner,
-`dist/OCRmyPDF-GUI-linux-x86_64.tar.gz` und
-`dist/OCRmyPDF-GUI-x86_64.AppImage`.
+Ergebnis: `dist/easyocrmypdf/` als Programmordner,
+`dist/EasyOcrMyPdf-linux-x86_64.tar.gz` und
+`dist/EasyOcrMyPdf-x86_64.AppImage`.
 
 Für die AppImage wird `appimagetool` gebraucht. Fehlt es, nennt das Skript den
 Bezugsweg und baut nur das Archiv:
@@ -509,8 +511,8 @@ Kreuzkompilierung.
 ### Paketgröße steuern
 
 Den größten Anteil haben die Sprachdateien von Tesseract. Voreingestellt sind
-deshalb nur Deutsch und Englisch, damit das DMG unter den 100 MB bleibt, die
-Codeberg je Release-Datei zulässt:
+deshalb nur Deutsch und Englisch; alle weiteren Sprachen lassen sich in der
+Anwendung nachladen:
 
 ```bash
 python tools/vendor_macos.py                        # Deutsch + Englisch  (39 MB)
@@ -522,18 +524,32 @@ python tools/vendor_macos.py --languages deu,eng,fra,ita   # eigene Auswahl
 Unter Windows und Linux gilt dasselbe für `tools\vendor_windows.py`
 beziehungsweise `tools/vendor_linux.py`.
 
-**Für Linux lohnt das Mitliefern nicht.** Ghostscript bringt dort
+**Unter Linux kostet das Mitliefern spürbar Platz.** Ghostscript bringt dort
 `libgs.so` mit 24 MB mit, und Qt verlangt die ICU-Bibliotheken, wovon allein
-`libicudata` 29 MB ausmacht. Das treibt die AppImage von 89 MB auf 146 MB und
-damit über die 100 MB, die Codeberg je Release-Datei zulässt. Da
-`sudo apt install tesseract-ocr ghostscript` unter Linux ein Einzeiler ist und
-der Einrichtungsdialog durch die Installation führt, werden die Linux-Pakete
-ohne `--vendor` gebaut:
+`libicudata` 29 MB ausmacht. Die Release-Pakete werden trotzdem mit `--vendor`
+gebaut, damit sie ohne Vorinstallation laufen. Wer ein schlankes Paket möchte,
+lässt `--vendor` weg und installiert `tesseract-ocr ghostscript` über die
+Paketverwaltung:
 
 | Variante | AppImage | Archiv |
 |---|---|---|
 | ohne `--vendor` | 89 MB | 94 MB |
 | mit `--vendor` | 146 MB | 154 MB |
+
+### Automatischer Build mit GitHub Actions
+
+`.github/workflows/build.yml` baut bei jedem Push auf `main` alle Pakete:
+macOS (Apple Silicon), Windows (x64) und Linux (x86_64 und aarch64, jeweils im
+Ubuntu-22.04-Container). Jedes Paket durchläuft danach `tools/smoke_test.py`,
+das eine Testseite erzeugt und prüft, ob das fertige Programm den Text
+erkennt. Die Pakete liegen anschließend als Artefakte am Workflow-Lauf.
+
+Ein Versions-Tag veröffentlicht zusätzlich ein Release samt `SHA256SUMS.txt`:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ### Signierung
 
@@ -549,9 +565,9 @@ Sicherheitswarnungen ist eine echte Signatur nötig:
 ## 9. Aufbau des Projekts
 
 ```
-OCRmyPDF-GUI/
+EasyOcrMyPdf/
 ├── main.py                     Startskript (auch Einstiegspunkt für PyInstaller)
-├── ocrmypdf_gui/
+├── easyocrmypdf/
 │   ├── app.py                  Programmstart; enthält auch den OCR-Arbeitermodus
 │   ├── config.py               Einstellungen laden und speichern
 │   ├── dependencies.py         Tesseract/Ghostscript finden, Umgebung aufbauen
@@ -571,17 +587,20 @@ OCRmyPDF-GUI/
 │       ├── widgets.py          Wiederverwendbare Bausteine
 │       └── style.py            Farben und Stylesheet (hell und dunkel)
 ├── packaging/
-│   ├── ocrmypdf_gui.spec       PyInstaller-Beschreibung
+│   ├── easyocrmypdf.spec       PyInstaller-Beschreibung
 │   ├── build_macos.sh          Build-Skript für macOS
 │   ├── build_windows.ps1       Build-Skript für Windows
 │   ├── build_linux.sh          Build-Skript für Linux
 │   ├── build_linux_docker.sh   baut Linux im Container, auch von macOS aus
 │   ├── Dockerfile.linux        Build-Umgebung für Linux (Ubuntu 22.04)
-│   ├── ocrmypdf-gui.desktop    Menüeintrag für Linux
+│   ├── easyocrmypdf.desktop    Menüeintrag für Linux
 │   └── installer.iss           Inno-Setup-Beschreibung
+├── .github/workflows/
+│   └── build.yml               baut und prüft alle Plattformen, erstellt Releases
 ├── tools/
 │   ├── make_icons.py           erzeugt icon.png/.icns/.ico
 │   ├── make_checksums.py       schreibt dist/sha.txt
+│   ├── smoke_test.py           prüft ein gebautes Paket mit echter Texterkennung
 │   ├── vendor_macos.py         bündelt Tesseract & Co. für macOS
 │   ├── vendor_windows.py       bündelt Tesseract & Co. für Windows
 │   └── vendor_linux.py         bündelt Tesseract & Co. für Linux

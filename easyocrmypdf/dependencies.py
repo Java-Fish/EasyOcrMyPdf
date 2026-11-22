@@ -155,7 +155,7 @@ def tessdata_dir() -> Optional[Path]:
     """
     # Hat der Nutzer Sprachen nachinstalliert, liegt der vollständige Bestand
     # im Benutzerprofil; der Ordner im Programmpaket ist dann veraltet.
-    from ocrmypdf_gui import tessdata
+    from easyocrmypdf import tessdata
 
     if tessdata.is_user_dir_active():
         return tessdata.user_tessdata_dir()
