@@ -44,6 +44,10 @@ echo "==> Generating icons"
 if [ "$DO_VENDOR" -eq 1 ]; then
   echo "==> Bundling Tesseract and Ghostscript"
   "$PYTHON" tools/vendor_macos.py
+else
+  # Ohne diese Variable bände die Spec einen aus einem früheren Lauf
+  # übriggebliebenen vendor-Ordner stillschweigend mit ein.
+  export OCRMYPDF_GUI_NO_VENDOR=1
 fi
 
 # --- Bauen -----------------------------------------------------------------

@@ -88,8 +88,8 @@ def user_tessdata_dir() -> Path:
 
 def is_user_dir_active() -> bool:
     """True, wenn der Benutzerordner bereits eingerichtet ist und benutzt wird."""
-    ordner = user_tessdata_dir()
-    return ordner.is_dir() and any(ordner.glob("*.traineddata"))
+    folder = user_tessdata_dir()
+    return folder.is_dir() and any(folder.glob("*.traineddata"))
 
 
 def ensure_user_dir(source: Optional[Path]) -> Path:
@@ -99,43 +99,43 @@ def ensure_user_dir(source: Optional[Path]) -> Path:
     wird einmalig kopiert, damit die bereits vorhandenen Sprachen und die
     Konfigurationsdateien erhalten bleiben.
     """
-    ziel = user_tessdata_dir()
-    ziel.mkdir(parents=True, exist_ok=True)
+    target = user_tessdata_dir()
+    target.mkdir(parents=True, exist_ok=True)
 
     if source is None or not source.is_dir():
-        return ziel
+        return target
 
-    for datei in source.glob("*.traineddata"):
-        kopie = ziel / datei.name
-        if not kopie.exists():
-            shutil.copy2(datei, kopie)
+    for path in source.glob("*.traineddata"):
+        copy = target / path.name
+        if not copy.exists():
+            shutil.copy2(path, copy)
 
     for name in REQUIRED_EXTRAS:
         herkunft = source / name
-        kopie = ziel / name
-        if kopie.exists() or not herkunft.exists():
+        copy = target / name
+        if copy.exists() or not herkunft.exists():
             continue
         if herkunft.is_dir():
-            shutil.copytree(herkunft, kopie)
+            shutil.copytree(herkunft, copy)
         else:
-            shutil.copy2(herkunft, kopie)
+            shutil.copy2(herkunft, copy)
 
-    return ziel
+    return target
 
 
 def installed_languages(folder: Optional[Path] = None) -> List[str]:
     """Sprachcodes, die in einem Ordner vorliegen."""
-    ordner = folder or user_tessdata_dir()
-    if not ordner.is_dir():
+    folder = folder or user_tessdata_dir()
+    if not folder.is_dir():
         return []
-    return sorted(datei.stem for datei in ordner.glob("*.traineddata"))
+    return sorted(path.stem for path in folder.glob("*.traineddata"))
 
 
 def remove_language(code: str) -> bool:
     """Löscht eine nachinstallierte Sprachdatei aus dem Benutzerordner."""
-    datei = user_tessdata_dir() / f"{code}.traineddata"
+    path = user_tessdata_dir() / f"{code}.traineddata"
     try:
-        datei.unlink()
+        path.unlink()
         return True
     except OSError:
         return False
@@ -155,8 +155,8 @@ def _certificate_bundle() -> Optional[str]:
         import certifi
     except ImportError:
         return None
-    pfad = Path(certifi.where())
-    return str(pfad) if pfad.is_file() else None
+    path = Path(certifi.where())
+    return str(path) if path.is_file() else None
 
 
 def _opener() -> urllib.request.OpenerDirector:
@@ -175,20 +175,20 @@ def fetch_index(variant_key: str) -> Dict[str, int]:
     variant = VARIANTS.get(variant_key) or VARIANTS[DEFAULT_VARIANT]
     try:
         with _opener().open(variant.index_url, timeout=NETWORK_TIMEOUT) as antwort:
-            eintraege = json.loads(antwort.read().decode("utf-8"))
+            entries = json.loads(antwort.read().decode("utf-8"))
     except (urllib.error.URLError, OSError, ValueError, TimeoutError) as fehler:
         raise DownloadError("download.error.network", str(fehler)) from fehler
 
-    ergebnis: Dict[str, int] = {}
-    for eintrag in eintraege:
-        if not isinstance(eintrag, dict):
+    result: Dict[str, int] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
             continue
-        name = str(eintrag.get("name", ""))
+        name = str(entry.get("name", ""))
         if name.endswith(".traineddata"):
-            ergebnis[name[: -len(".traineddata")]] = int(eintrag.get("size", 0))
-    if not ergebnis:
+            result[name[: -len(".traineddata")]] = int(entry.get("size", 0))
+    if not result:
         raise DownloadError("download.error.network", "empty index")
-    return ergebnis
+    return result
 
 
 def download_language(
@@ -206,14 +206,14 @@ def download_language(
     """
     variant = VARIANTS.get(variant_key) or VARIANTS[DEFAULT_VARIANT]
     target_dir.mkdir(parents=True, exist_ok=True)
-    ziel = target_dir / f"{code}.traineddata"
-    zwischendatei = target_dir / f"{code}.traineddata.part"
+    target = target_dir / f"{code}.traineddata"
+    temporary = target_dir / f"{code}.traineddata.part"
 
     try:
         with _opener().open(variant.file_url(code), timeout=NETWORK_TIMEOUT) as antwort:
-            gesamt = int(antwort.headers.get("Content-Length") or 0)
-            geladen = 0
-            with zwischendatei.open("wb") as ausgabe:
+            total = int(antwort.headers.get("Content-Length") or 0)
+            received = 0
+            with temporary.open("wb") as ausgabe:
                 while True:
                     if cancelled is not None and cancelled():
                         raise DownloadError("download.error.cancelled")
@@ -221,23 +221,23 @@ def download_language(
                     if not block:
                         break
                     ausgabe.write(block)
-                    geladen += len(block)
+                    received += len(block)
                     if progress is not None:
-                        progress(geladen, gesamt)
+                        progress(received, total)
     except DownloadError:
-        zwischendatei.unlink(missing_ok=True)
+        temporary.unlink(missing_ok=True)
         raise
     except urllib.error.HTTPError as fehler:
-        zwischendatei.unlink(missing_ok=True)
-        schluessel = "download.error.notFound" if fehler.code == 404 else "download.error.network"
-        raise DownloadError(schluessel, f"HTTP {fehler.code}") from fehler
+        temporary.unlink(missing_ok=True)
+        key = "download.error.notFound" if fehler.code == 404 else "download.error.network"
+        raise DownloadError(key, f"HTTP {fehler.code}") from fehler
     except (urllib.error.URLError, OSError, TimeoutError) as fehler:
-        zwischendatei.unlink(missing_ok=True)
+        temporary.unlink(missing_ok=True)
         raise DownloadError("download.error.network", str(fehler)) from fehler
 
     try:
-        zwischendatei.replace(ziel)
+        temporary.replace(target)
     except OSError as fehler:
-        zwischendatei.unlink(missing_ok=True)
+        temporary.unlink(missing_ok=True)
         raise DownloadError("download.error.write", str(fehler)) from fehler
-    return ziel
+    return target

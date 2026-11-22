@@ -159,9 +159,33 @@ class OcrRunner(QThread):
         """Verarbeitet eine Datei und meldet Fortschritt sowie Ergebnis."""
         started = time.monotonic()
 
+        target = self._prepare_target(index, job)
+        if target is None:
+            return
+
+        total_pages = count_pages(job.source)
+        self.jobStarted.emit(index, total_pages)
+
+        if not self._start_process(index, job, target, command, environment):
+            return
+
+        last_lines = self._consume_output(index, total_pages)
+
+        return_code = self._process.wait() if self._process is not None else 1
+        self._process = None
+        self._report_result(index, target, return_code, last_lines,
+                            time.monotonic() - started)
+
+    # ------------------------------------------------------------------
+    def _prepare_target(self, index: int, job: Job) -> Optional[Path]:
+        """Prüft die Quelldatei und legt den Zielordner an.
+
+        Liefert den Zielpfad oder ``None``, wenn der Auftrag bereits hier
+        scheitert; in dem Fall ist das Ergebnis schon gemeldet.
+        """
         if not job.source.is_file():
             self.jobFinished.emit(JobResult(index, JobStatus.FAILED, None, "error.inputMissing"))
-            return
+            return None
 
         target = self._settings.target_path_for(job.source)
         try:
@@ -170,11 +194,12 @@ class OcrRunner(QThread):
             self.jobFinished.emit(
                 JobResult(index, JobStatus.FAILED, None, "error.outputFolder", str(error))
             )
-            return
+            return None
+        return target
 
-        total_pages = count_pages(job.source)
-        self.jobStarted.emit(index, total_pages)
-
+    def _start_process(self, index: int, job: Job, target: Path,
+                       command: List[str], environment) -> bool:
+        """Startet OCRmyPDF als Unterprozess. False, wenn das misslingt."""
         arguments = [*command, "-v", "1", *self._settings.build_arguments(job.source, target)]
         self.logLine.emit(f"$ ocrmypdf {' '.join(arguments[len(command) + 2:])}", False)
 
@@ -195,13 +220,22 @@ class OcrRunner(QThread):
             self.jobFinished.emit(
                 JobResult(index, JobStatus.FAILED, None, "error.launch", str(error))
             )
-            return
+            return False
+        return True
 
+    def _consume_output(self, index: int, total_pages: int) -> List[str]:
+        """Liest die Ausgabe von OCRmyPDF und meldet daraus den Fortschritt.
+
+        Liefert die letzten aussagekräftigen Zeilen; sie dienen im Fehlerfall
+        als Hinweis in der Meldung.
+        """
         seen_pages: set[int] = set()
         phase = "phase.ocr"
         last_lines: List[str] = []
 
-        assert self._process.stdout is not None
+        if self._process is None or self._process.stdout is None:
+            return last_lines
+
         for raw_line in self._process.stdout:
             line = raw_line.rstrip("\n").rstrip("\r")
             if not line.strip():
@@ -211,15 +245,14 @@ class OcrRunner(QThread):
             self.logLine.emit(line, noise)
             if not noise and _useful_error_line(line):
                 last_lines.append(line)
-                del last_lines[:-8]  # nur die letzten Zeilen für die Fehlermeldung behalten
+                del last_lines[:-8]  # nur die letzten Zeilen für die Meldung behalten
 
-            # --- Gesamtseitenzahl nachtragen, falls sie noch fehlt ---
+            # Gesamtseitenzahl nachtragen, falls sie vorab nicht zu ermitteln war
             if total_pages == 0:
                 match = _TOTAL_PAGES.search(line)
                 if match:
                     total_pages = int(match.group(1) or match.group(2))
 
-            # --- Phase und Seitenfortschritt ableiten ---
             new_phase = _phase_for(line)
             if new_phase is not None:
                 phase = new_phase
@@ -230,10 +263,11 @@ class OcrRunner(QThread):
 
             self.jobProgress.emit(index, len(seen_pages), total_pages, phase)
 
-        return_code = self._process.wait()
-        self._process = None
-        duration = time.monotonic() - started
+        return last_lines
 
+    def _report_result(self, index: int, target: Path, return_code: int,
+                       last_lines: List[str], duration: float) -> None:
+        """Wertet den Rückgabewert aus und meldet das Ergebnis des Auftrags."""
         if self._cancelled:
             # Halbfertige Ausgabedatei entfernen, damit nichts Kaputtes zurückbleibt.
             _remove_quietly(target)
@@ -241,9 +275,7 @@ class OcrRunner(QThread):
             return
 
         if return_code == 0:
-            self.jobFinished.emit(
-                JobResult(index, JobStatus.DONE, target, duration=duration)
-            )
+            self.jobFinished.emit(JobResult(index, JobStatus.DONE, target, duration=duration))
             return
 
         if return_code == 6:

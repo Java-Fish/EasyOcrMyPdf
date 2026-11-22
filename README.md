@@ -485,6 +485,27 @@ chmod +x ~/.local/bin/appimagetool
 > baut auf einer möglichst alten Distribution oder lässt `--vendor` weg und
 > überlässt Tesseract und Ghostscript der Paketverwaltung.
 
+### Linux bauen ohne Linux-Rechner
+
+Mit Docker lassen sich die Linux-Pakete auch von macOS oder Windows aus
+erzeugen:
+
+```bash
+./packaging/build_linux_docker.sh              # x86_64, wie für Releases
+./packaging/build_linux_docker.sh --arch arm64 # für ARM-Linux
+./packaging/build_linux_docker.sh --shell      # Eingabeaufforderung im Container
+```
+
+Das Abbild baut auf Ubuntu 22.04 auf. Das ist Absicht: Die glibc des
+Build-Systems legt fest, ab welcher Distribution das Ergebnis läuft. Mit
+glibc 2.35 sind auch Debian 12 und RHEL 9 abgedeckt; auf 24.04 gebaut liefe es
+dort nicht.
+
+Auf Apple Silicon läuft der x86_64-Bau unter Emulation und braucht etwa fünf
+Minuten statt einer. Für Windows gibt es diesen Weg nicht: Docker kann auf
+macOS keine Windows-Container ausführen, und PyInstaller unterstützt keine
+Kreuzkompilierung.
+
 ### Paketgröße steuern
 
 Den größten Anteil haben die Sprachdateien von Tesseract. Voreingestellt sind
@@ -500,6 +521,19 @@ python tools/vendor_macos.py --languages deu,eng,fra,ita   # eigene Auswahl
 
 Unter Windows und Linux gilt dasselbe für `tools\vendor_windows.py`
 beziehungsweise `tools/vendor_linux.py`.
+
+**Für Linux lohnt das Mitliefern nicht.** Ghostscript bringt dort
+`libgs.so` mit 24 MB mit, und Qt verlangt die ICU-Bibliotheken, wovon allein
+`libicudata` 29 MB ausmacht. Das treibt die AppImage von 89 MB auf 146 MB und
+damit über die 100 MB, die Codeberg je Release-Datei zulässt. Da
+`sudo apt install tesseract-ocr ghostscript` unter Linux ein Einzeiler ist und
+der Einrichtungsdialog durch die Installation führt, werden die Linux-Pakete
+ohne `--vendor` gebaut:
+
+| Variante | AppImage | Archiv |
+|---|---|---|
+| ohne `--vendor` | 89 MB | 94 MB |
+| mit `--vendor` | 146 MB | 154 MB |
 
 ### Signierung
 
@@ -541,6 +575,8 @@ OCRmyPDF-GUI/
 │   ├── build_macos.sh          Build-Skript für macOS
 │   ├── build_windows.ps1       Build-Skript für Windows
 │   ├── build_linux.sh          Build-Skript für Linux
+│   ├── build_linux_docker.sh   baut Linux im Container, auch von macOS aus
+│   ├── Dockerfile.linux        Build-Umgebung für Linux (Ubuntu 22.04)
 │   ├── ocrmypdf-gui.desktop    Menüeintrag für Linux
 │   └── installer.iss           Inno-Setup-Beschreibung
 ├── tools/

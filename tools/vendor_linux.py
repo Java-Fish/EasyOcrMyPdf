@@ -112,32 +112,32 @@ def dependencies_of(binary: Path) -> List[Path]:
     except RuntimeError:
         return []
     gefunden: List[Path] = []
-    for zeile in ausgabe.splitlines():
-        treffer = _LDD_LINE.search(zeile)
+    for row in ausgabe.splitlines():
+        treffer = _LDD_LINE.search(row)
         if not treffer:
             continue
-        pfad = treffer.group(1)
-        if pfad and not is_system_library(pfad) and Path(pfad).is_file():
-            gefunden.append(Path(pfad).resolve())
+        path = treffer.group(1)
+        if path and not is_system_library(path) and Path(path).is_file():
+            gefunden.append(Path(path).resolve())
     return gefunden
 
 
 def collect_libraries(binaries: Iterable[Path]) -> Set[Path]:
     """Sammelt rekursiv alle mitzuliefernden Bibliotheken."""
-    offen = list(binaries)
-    gesehen: Set[Path] = set()
-    bibliotheken: Set[Path] = set()
-    while offen:
-        aktuell = offen.pop()
-        if aktuell in gesehen:
+    pending = list(binaries)
+    seen: Set[Path] = set()
+    libraries: Set[Path] = set()
+    while pending:
+        current = pending.pop()
+        if current in seen:
             continue
-        gesehen.add(aktuell)
-        for bibliothek in dependencies_of(aktuell):
-            if bibliothek in bibliotheken:
+        seen.add(current)
+        for library in dependencies_of(current):
+            if library in libraries:
                 continue
-            bibliotheken.add(bibliothek)
-            offen.append(bibliothek)
-    return bibliotheken
+            libraries.add(library)
+            pending.append(library)
+    return libraries
 
 
 def set_rpath(target: Path, rpath: str) -> None:
@@ -151,57 +151,57 @@ def copy_tessdata(destination: Path, wanted: Optional[Set[str]]) -> int:
 
     ``wanted`` schränkt auf bestimmte Sprachcodes ein; ``None`` nimmt alle.
     """
-    quelle = next((Path(p) for p in TESSDATA_CANDIDATES if Path(p).is_dir()), None)
-    if quelle is None:
+    source = next((Path(p) for p in TESSDATA_CANDIDATES if Path(p).is_dir()), None)
+    if source is None:
         print("WARNING: no tessdata folder found - languages will be missing",
               file=sys.stderr)
         return 0
 
     destination.mkdir(parents=True, exist_ok=True)
-    anzahl = 0
-    for eintrag in sorted(quelle.iterdir()):
-        if not eintrag.is_file() or eintrag.suffix != ".traineddata":
+    count = 0
+    for entry in sorted(source.iterdir()):
+        if not entry.is_file() or entry.suffix != ".traineddata":
             continue
-        if wanted is not None and eintrag.stem not in wanted:
+        if wanted is not None and entry.stem not in wanted:
             continue
-        shutil.copy2(eintrag, destination / eintrag.name)
-        anzahl += 1
+        shutil.copy2(entry, destination / entry.name)
+        count += 1
 
     # Neben den Sprachdaten braucht Tesseract seine Konfigurationsdateien.
     # Ohne den Ordner "configs" schlägt jeder Aufruf mit "hocr"/"txt" fehl.
-    for ordner in ("configs", "tessconfigs"):
-        quellordner = quelle / ordner
-        if quellordner.is_dir():
-            zielordner = destination / ordner
-            if zielordner.exists():
-                shutil.rmtree(zielordner)
-            shutil.copytree(quellordner, zielordner)
+    for folder in ("configs", "tessconfigs"):
+        source_folder = source / folder
+        if source_folder.is_dir():
+            target_folder = destination / folder
+            if target_folder.exists():
+                shutil.rmtree(target_folder)
+            shutil.copytree(source_folder, target_folder)
 
     # Die Schrift wird für die PDF-Ausgabe von Tesseract benötigt.
-    schrift = quelle / "pdf.ttf"
-    if schrift.is_file():
-        shutil.copy2(schrift, destination / schrift.name)
+    font = source / "pdf.ttf"
+    if font.is_file():
+        shutil.copy2(font, destination / font.name)
 
     if wanted is not None:
-        fehlend = sorted(wanted - {f.stem for f in destination.glob("*.traineddata")})
-        if fehlend:
+        missing = sorted(wanted - {f.stem for f in destination.glob("*.traineddata")})
+        if missing:
             print(
-                f"  note: not installed, skipped: {', '.join(fehlend)}\n"
+                f"  note: not installed, skipped: {', '.join(missing)}\n"
                 f"        (install them with: sudo apt install "
-                f"{' '.join('tesseract-ocr-' + c for c in fehlend if c != 'osd')})",
+                f"{' '.join('tesseract-ocr-' + c for c in missing if c != 'osd')})",
                 file=sys.stderr,
             )
-    return anzahl
+    return count
 
 
 def parse_languages(value: str) -> Optional[Set[str]]:
     """Wertet die Option ``--languages`` aus. ``None`` bedeutet: alle."""
-    gewaehlt = value.strip().lower()
-    if gewaehlt == "all":
+    chosen = value.strip().lower()
+    if chosen == "all":
         return None
-    if gewaehlt == "standard":
+    if chosen == "standard":
         return set(STANDARD_LANGUAGES)
-    if gewaehlt == "european":
+    if chosen == "european":
         return set(EUROPEAN_LANGUAGES)
     return {code.strip() for code in value.split(",") if code.strip()}
 
@@ -232,25 +232,25 @@ def main() -> int:
 
     binaries: List[Path] = []
     for tool in TOOLS:
-        ort = shutil.which(tool)
-        if ort is None:
+        location = shutil.which(tool)
+        if location is None:
             print(
                 f"ERROR: '{tool}' not found. Install it first:\n"
                 f"    sudo apt install tesseract-ocr tesseract-ocr-deu ghostscript",
                 file=sys.stderr,
             )
             return 1
-        binaries.append(Path(ort).resolve())
+        binaries.append(Path(location).resolve())
 
     for tool in OPTIONAL_TOOLS:
-        ort = shutil.which(tool)
-        if ort is None:
+        location = shutil.which(tool)
+        if location is None:
             print(
                 f"note: optional tool '{tool}' not found - the higher "
                 f"optimisation levels will be disabled in the app."
             )
             continue
-        binaries.append(Path(ort).resolve())
+        binaries.append(Path(location).resolve())
 
     bin_dir = VENDOR / "bin"
     lib_dir = VENDOR / "lib"
@@ -259,35 +259,35 @@ def main() -> int:
     lib_dir.mkdir(parents=True)
 
     print("Collecting libraries ...")
-    bibliotheken = collect_libraries(binaries)
-    print(f"  {len(bibliotheken)} libraries")
+    libraries = collect_libraries(binaries)
+    print(f"  {len(libraries)} libraries")
 
-    kopierte_programme: List[Path] = []
-    for quelle in binaries:
-        ziel = bin_dir / quelle.name
-        shutil.copy2(quelle, ziel)
-        ziel.chmod(0o755)
-        kopierte_programme.append(ziel)
+    copied_binaries: List[Path] = []
+    for source in binaries:
+        target = bin_dir / source.name
+        shutil.copy2(source, target)
+        target.chmod(0o755)
+        copied_binaries.append(target)
 
-    kopierte_bibliotheken: List[Path] = []
-    for quelle in bibliotheken:
-        ziel = lib_dir / quelle.name
-        shutil.copy2(quelle, ziel)
-        ziel.chmod(0o755)
-        kopierte_bibliotheken.append(ziel)
+    copied_libraries: List[Path] = []
+    for source in libraries:
+        target = lib_dir / source.name
+        shutil.copy2(source, target)
+        target.chmod(0o755)
+        copied_libraries.append(target)
 
     print("Rewriting library paths ...")
-    for ziel in kopierte_bibliotheken:
-        set_rpath(ziel, "$ORIGIN")
-    for ziel in kopierte_programme:
-        set_rpath(ziel, "$ORIGIN/../lib")
+    for target in copied_libraries:
+        set_rpath(target, "$ORIGIN")
+    for target in copied_binaries:
+        set_rpath(target, "$ORIGIN/../lib")
 
     print("Copying language data ...")
-    anzahl = copy_tessdata(VENDOR / "share" / "tessdata", wanted)
-    print(f"  {anzahl} language files")
+    count = copy_tessdata(VENDOR / "share" / "tessdata", wanted)
+    print(f"  {count} language files")
 
-    groesse = sum(f.stat().st_size for f in VENDOR.rglob("*") if f.is_file())
-    print(f"\nDone: {VENDOR}  ({groesse / 1024 / 1024:.0f} MB)")
+    size = sum(f.stat().st_size for f in VENDOR.rglob("*") if f.is_file())
+    print(f"\nDone: {VENDOR}  ({size / 1024 / 1024:.0f} MB)")
     print("Now run:  ./packaging/build_linux.sh")
     return 0
 

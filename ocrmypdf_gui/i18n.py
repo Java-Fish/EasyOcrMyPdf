@@ -441,8 +441,10 @@ def _windows_ui_language() -> str:
     try:
         import ctypes
 
-        buffer = ctypes.create_unicode_buffer(85)
-        if ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, 85):  # type: ignore[attr-defined]
+        # Von Windows vorgegebene Puffergröße für einen Gebietsschema-Namen.
+        laenge = 85
+        buffer = ctypes.create_unicode_buffer(laenge)
+        if ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, laenge):  # type: ignore[attr-defined]
             return buffer.value
     except Exception:  # pragma: no cover - rein defensiv
         pass

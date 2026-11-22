@@ -44,6 +44,10 @@ Write-Host "==> Generating icons"
 if ($Vendor) {
     Write-Host "==> Bundling Tesseract and Ghostscript"
     & $Python tools\vendor_windows.py
+} else {
+    # Ohne diese Variable bände die Spec einen aus einem früheren Lauf
+    # übriggebliebenen vendor-Ordner stillschweigend mit ein.
+    $env:OCRMYPDF_GUI_NO_VENDOR = "1"
 }
 
 # --- Bauen -----------------------------------------------------------------

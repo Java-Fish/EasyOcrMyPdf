@@ -245,12 +245,12 @@ def copy_tessdata(destination: Path, wanted: Optional[Set[str]]) -> int:
 
 def parse_languages(value: str) -> Optional[Set[str]]:
     """Wertet die Option ``--languages`` aus. ``None`` bedeutet: alle."""
-    gewaehlt = value.strip().lower()
-    if gewaehlt == "all":
+    chosen = value.strip().lower()
+    if chosen == "all":
         return None
-    if gewaehlt == "standard":
+    if chosen == "standard":
         return set(STANDARD_LANGUAGES)
-    if gewaehlt == "european":
+    if chosen == "european":
         return set(EUROPEAN_LANGUAGES)
     return {code.strip() for code in value.split(",") if code.strip()}
 

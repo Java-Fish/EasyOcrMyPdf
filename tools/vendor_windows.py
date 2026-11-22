@@ -86,12 +86,12 @@ def copy_tree(source: Path, destination: Path) -> int:
 
 def parse_languages(value: str) -> Optional[Set[str]]:
     """Wertet die Option ``--languages`` aus. ``None`` bedeutet: alle."""
-    gewaehlt = value.strip().lower()
-    if gewaehlt == "all":
+    chosen = value.strip().lower()
+    if chosen == "all":
         return None
-    if gewaehlt == "standard":
+    if chosen == "standard":
         return set(STANDARD_LANGUAGES)
-    if gewaehlt == "european":
+    if chosen == "european":
         return set(EUROPEAN_LANGUAGES)
     return {code.strip() for code in value.split(",") if code.strip()}
 
@@ -177,10 +177,10 @@ def main() -> int:
         print(f"Language files: {count}")
 
         if wanted is not None:
-            fehlend = sorted(wanted - {f.stem for f in target.glob("*.traineddata")})
-            if fehlend:
+            missing = sorted(wanted - {f.stem for f in target.glob("*.traineddata")})
+            if missing:
                 print(
-                    f"  note: not installed, skipped: {', '.join(fehlend)}\n"
+                    f"  note: not installed, skipped: {', '.join(missing)}\n"
                     f"        (add them via the Tesseract installer)",
                     file=sys.stderr,
                 )

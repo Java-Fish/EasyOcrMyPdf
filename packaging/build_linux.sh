@@ -15,7 +15,10 @@ cd "$PROJECT_ROOT"
 
 APP_NAME="OCRmyPDF GUI"
 BINARY_NAME="ocrmypdf-gui"
-VENV=".venv"
+# Der Ordner lässt sich über die Umgebung überschreiben. Im Docker-Abbild
+# liegt er außerhalb des Projekts, weil dort bereits ein .venv für macOS
+# eingehängt sein kann.
+VENV="${VENV:-.venv}"
 DO_VENDOR=0
 MAKE_APPIMAGE=0
 
@@ -29,9 +32,14 @@ for argument in "$@"; do
 done
 
 # --- Virtuelle Umgebung vorbereiten ---------------------------------------
+# Welcher Interpreter die Umgebung anlegt, lässt sich vorgeben. Nötig etwa im
+# Docker-Abbild: dort ist "python3" die Version der Distribution (3.10),
+# OCRmyPDF verlangt aber mindestens 3.11.
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+
 if [ ! -d "$VENV" ]; then
-  echo "==> Creating virtual environment"
-  python3 -m venv "$VENV"
+  echo "==> Creating virtual environment with $PYTHON_BIN"
+  "$PYTHON_BIN" -m venv "$VENV"
 fi
 PYTHON="$VENV/bin/python"
 
@@ -47,6 +55,10 @@ echo "==> Generating icons"
 if [ "$DO_VENDOR" -eq 1 ]; then
   echo "==> Bundling Tesseract and Ghostscript"
   "$PYTHON" tools/vendor_linux.py
+else
+  # Ohne diese Variable bände die Spec einen aus einem früheren Lauf
+  # übriggebliebenen vendor-Ordner stillschweigend mit ein.
+  export OCRMYPDF_GUI_NO_VENDOR=1
 fi
 
 # --- Bauen -----------------------------------------------------------------
@@ -73,8 +85,8 @@ echo "    $ARCHIVE"
 # --- Optional: AppImage ----------------------------------------------------
 if [ "$MAKE_APPIMAGE" -eq 1 ]; then
   echo "==> Creating AppImage"
-  if ! command -v appimagetool >/dev/null 2>&1; then
-    echo "    appimagetool was not found. Get it with:" >&2
+  if ! command -v appimagetool >/dev/null 2>&1 && [ ! -f /usr/local/share/appimage-runtime ]; then
+    echo "    Neither appimagetool nor an AppImage runtime was found. Get the tool with:" >&2
     echo "      wget -O ~/.local/bin/appimagetool \\" >&2
     echo "        https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$(uname -m).AppImage" >&2
     echo "      chmod +x ~/.local/bin/appimagetool" >&2
@@ -101,10 +113,26 @@ APPRUN
     chmod +x "$APPDIR/AppRun"
 
     APPIMAGE="dist/OCRmyPDF-GUI-$(uname -m).AppImage"
+    RUNTIME="/usr/local/share/appimage-runtime"
     rm -f "$APPIMAGE"
-    # ARCH ist für appimagetool verbindlich, sonst bricht es ab.
-    ARCH="$(uname -m)" appimagetool "$APPDIR" "$APPIMAGE" >/dev/null
-    echo "    $APPIMAGE"
+
+    if command -v appimagetool >/dev/null 2>&1 && appimagetool --version >/dev/null 2>&1; then
+      # ARCH ist für appimagetool verbindlich, sonst bricht es ab.
+      ARCH="$(uname -m)" appimagetool "$APPDIR" "$APPIMAGE" >/dev/null
+      echo "    $APPIMAGE"
+    elif [ -f "$RUNTIME" ] && command -v mksquashfs >/dev/null 2>&1; then
+      # Ohne lauffähiges appimagetool von Hand zusammensetzen. Eine AppImage
+      # ist ein Squashfs-Abbild, dem die Startroutine vorangestellt wird.
+      echo "    (appimagetool nicht ausführbar, baue die AppImage direkt)"
+      mksquashfs "$APPDIR" build/AppDir.squashfs \
+        -root-owned -noappend -quiet -no-progress -comp zstd
+      cat "$RUNTIME" build/AppDir.squashfs > "$APPIMAGE"
+      chmod +x "$APPIMAGE"
+      rm -f build/AppDir.squashfs
+      echo "    $APPIMAGE"
+    else
+      echo "    Neither appimagetool nor mksquashfs is usable; skipping." >&2
+    fi
   fi
 fi
 

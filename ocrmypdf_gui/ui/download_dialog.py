@@ -69,7 +69,7 @@ class DownloadWorker(QThread):
         try:
             tessdata.download_language(
                 self._code, self._variant, self._target,
-                progress=lambda geladen, gesamt: self.progress.emit(geladen, gesamt),
+                progress=lambda received, total: self.progress.emit(received, total),
                 cancelled=lambda: self._cancelled,
             )
             self.finished_ok.emit(self._code)
@@ -159,8 +159,8 @@ class DownloadDialog(QDialog):
         intro.setWordWrap(True)
 
         self._variant = QComboBox(self)
-        for schluessel in ("fast", "best"):
-            self._variant.addItem(tr(f"download.variant.{schluessel}"), schluessel)
+        for key in ("fast", "best"):
+            self._variant.addItem(tr(f"download.variant.{key}"), key)
         self._variant.currentIndexChanged.connect(self._reload_index)
         variant_field = Field(tr("download.variant"), self._variant, tr("download.variant.help"))
 
@@ -234,17 +234,17 @@ class DownloadDialog(QDialog):
     def _on_index(self, index: Dict[str, int]) -> None:
         """Baut die Liste aus der abgerufenen Übersicht auf."""
         self._index = index
-        vorhanden = set(self._installed())
+        installed = set(self._installed())
         codes = language_names.order_for_display(list(index), tr.language)
 
         for code in codes:
-            zeile = LanguageRow(code, index.get(code, 0), code in vorhanden)
-            zeile.actionRequested.connect(self._on_action)
-            eintrag = QListWidgetItem(self._list)
-            eintrag.setSizeHint(QSize(0, zeile.sizeHint().height()))
-            self._list.addItem(eintrag)
-            self._list.setItemWidget(eintrag, zeile)
-            self._rows.append(zeile)
+            row = LanguageRow(code, index.get(code, 0), code in installed)
+            row.actionRequested.connect(self._on_action)
+            entry = QListWidgetItem(self._list)
+            entry.setSizeHint(QSize(0, row.sizeHint().height()))
+            self._list.addItem(entry)
+            self._list.setItemWidget(entry, row)
+            self._rows.append(row)
 
         self._set_busy(False)
         self._update_status()
@@ -274,23 +274,23 @@ class DownloadDialog(QDialog):
         # Vor dem ersten Download den Bestand ins Benutzerprofil übernehmen,
         # weil der Ordner im Programmpaket schreibgeschützt ist.
         """Startet den Download einer Sprache im Hintergrund."""
-        ziel = tessdata.ensure_user_dir(dependencies.effective_tessdata_dir())
+        target = tessdata.ensure_user_dir(dependencies.effective_tessdata_dir())
         self._set_busy(True)
         self._progress.setRange(0, 0)
         self._progress.show()
         self._status.setText(tr("download.progress", name=language_names.display_name(code, tr.language)))
 
-        self._download_worker = DownloadWorker(code, self._current_variant(), ziel, self)
+        self._download_worker = DownloadWorker(code, self._current_variant(), target, self)
         self._download_worker.progress.connect(self._on_progress)
         self._download_worker.finished_ok.connect(self._on_downloaded)
         self._download_worker.failed.connect(self._on_download_failed)
         self._download_worker.start()
 
-    def _on_progress(self, geladen: int, gesamt: int) -> None:
+    def _on_progress(self, received: int, total: int) -> None:
         """Zeigt den Fortschritt des laufenden Downloads."""
-        if gesamt > 0:
-            self._progress.setRange(0, gesamt)
-            self._progress.setValue(geladen)
+        if total > 0:
+            self._progress.setRange(0, total)
+            self._progress.setValue(received)
         else:
             self._progress.setRange(0, 0)
 
@@ -334,24 +334,24 @@ class DownloadDialog(QDialog):
 
     def _refresh_rows(self) -> None:
         """Gleicht den Zustand aller Zeilen mit dem Dateisystem ab."""
-        vorhanden = set(self._installed())
-        for zeile in self._rows:
-            zeile.set_installed(zeile.code in vorhanden)
+        installed = set(self._installed())
+        for row in self._rows:
+            row.set_installed(row.code in installed)
         self._update_status()
 
     def _set_busy(self, busy: bool) -> None:
         """Sperrt Bedienelemente, solange eine Netzanfrage läuft."""
         self._variant.setEnabled(not busy)
-        for zeile in self._rows:
-            zeile.set_busy(busy)
+        for row in self._rows:
+            row.set_busy(busy)
 
     def _apply_filter(self, text: str) -> None:
         """Blendet Zeilen aus, die nicht zum Suchbegriff passen."""
         suche = text.strip().lower()
-        for zeile, reihe in zip(self._rows, range(self._list.count())):
-            eintrag = self._list.item(reihe)
-            if eintrag is not None:
-                eintrag.setHidden(bool(suche) and suche not in zeile.text.lower())
+        for row, reihe in zip(self._rows, range(self._list.count())):
+            entry = self._list.item(reihe)
+            if entry is not None:
+                entry.setHidden(bool(suche) and suche not in row.text.lower())
 
     def closeEvent(self, event) -> None:  # noqa: N802
         """Bricht einen laufenden Download ab, bevor das Fenster schließt."""

@@ -124,13 +124,13 @@ class LanguageDialog(QDialog):
         """Baut die Auswahlliste neu auf, ohne die Auswahl zu verlieren."""
         from ocrmypdf_gui import dependencies
 
-        gewaehlt = set(self.selected_languages())
+        chosen = set(self.selected_languages())
         self._list.clear()
         self._boxes.clear()
         ui_language = tr.language
         for code in language_names.order_for_display(dependencies.available_languages(), ui_language):
             box = QCheckBox(language_names.display_name(code, ui_language), self._list)
-            box.setChecked(code in gewaehlt)
+            box.setChecked(code in chosen)
             box.toggled.connect(self._update_counter)
             item = QListWidgetItem(self._list)
             item.setSizeHint(QSize(0, box.sizeHint().height() + 8))

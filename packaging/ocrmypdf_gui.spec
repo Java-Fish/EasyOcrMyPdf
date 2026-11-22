@@ -9,6 +9,7 @@ Das Ergebnis liegt unter ``dist/``:
   * Windows -> OCRmyPDF GUI/OCRmyPDF GUI.exe
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -52,8 +53,13 @@ resources = PROJECT_ROOT / "resources"
 if (resources / "icon.png").is_file():
     datas.append((str(resources / "icon.png"), "resources"))
 
+# Ein vorhandener vendor-Ordner wird sonst auch dann eingebunden, wenn dieser
+# Build bewusst ohne mitgelieferte Programme entstehen soll. Die Build-Skripte
+# setzen die Variable, wenn ohne "--vendor" gebaut wird.
+skip_vendor = os.environ.get("OCRMYPDF_GUI_NO_VENDOR") == "1"
+
 vendor_dir = PROJECT_ROOT / "vendor" / ("windows" if IS_WINDOWS else ("macos" if IS_MACOS else "linux"))
-if vendor_dir.is_dir() and any(vendor_dir.iterdir()):
+if not skip_vendor and vendor_dir.is_dir() and any(vendor_dir.iterdir()):
     # Zielpfad muss zu dependencies.vendor_root() passen.
     datas.append((str(vendor_dir), f"vendor/{vendor_dir.name}"))
 
@@ -112,22 +118,45 @@ analysis = Analysis(  # noqa: F821
 # unnötig aufblähen. Die Anwendung benutzt ausschließlich QtCore, QtGui und
 # QtWidgets; alles rund um QML, Quick, die Bildschirmtastatur und den
 # PDF-Betrachter von Qt kann entfallen.
-UNUSED_QT_PARTS = {
-    "QtPdf", "QtPdfQuick", "QtPdfWidgets",
-    "QtQuick", "QtQuick3D", "QtQuickControls2", "QtQuickWidgets",
-    "QtQml", "QtQmlMeta", "QtQmlModels", "QtQmlWorkerScript", "QtQmlCore",
-    "QtVirtualKeyboard", "QtVirtualKeyboardQml",
+# Qt-Module, die diese Anwendung nicht verwendet. Angegeben ohne Präfix, weil
+# jede Plattform anders benennt:
+#   macOS    QtQuick.framework/Versions/A/QtQuick
+#   Linux    libQt6Quick.so.6
+#   Windows  Qt6Quick.dll
+UNUSED_QT_MODULES = {
+    "Pdf", "PdfQuick", "PdfWidgets",
+    "Quick", "Quick3D", "QuickControls2", "QuickWidgets", "QuickShapes",
+    "QuickTest", "QuickLayouts", "QuickDialogs2", "QuickTemplates2",
+    "QuickVectorImage", "QuickVectorImageGenerator",
+    "Qml", "QmlMeta", "QmlModels", "QmlWorkerScript", "QmlCore", "QmlLocalStorage",
+    "VirtualKeyboard", "VirtualKeyboardQml", "VirtualKeyboardSettings",
 }
 # Nicht entfernen, auch wenn es verlockend aussieht: QtGui verweist auf QtDBus,
 # ohne das die Anwendung nicht mehr startet. QtSvg und QtOpenGL brächten im
-# fertigen DMG praktisch nichts, weil sie sich sehr gut komprimieren lassen.
+# fertigen Paket praktisch nichts, weil sie sich sehr gut komprimieren lassen.
 
 # Einzelne Plugins, die ohne die oben entfernten Bibliotheken nutzlos sind.
 # Bleiben sie liegen, versucht Qt beim Start vergeblich, sie zu laden.
 UNUSED_QT_PLUGINS = (
     "platforminputcontexts/libqtvirtualkeyboardplugin",
     "imageformats/libqpdf",
+    "imageformats/qpdf",
 )
+
+
+def _qt_module_name(part):
+    """Schält den reinen Modulnamen aus einem Dateinamen, sonst None.
+
+    Beispiele: "libQt6Quick.so.6" -> "Quick", "Qt6Qml.dll" -> "Qml",
+    "QtQuick.framework" -> "Quick".
+    """
+    name = str(part).split(".")[0]
+    if name.startswith("lib"):
+        name = name[3:]
+    for praefix in ("Qt6", "Qt5", "Qt"):
+        if name.startswith(praefix) and len(name) > len(praefix):
+            return name[len(praefix):]
+    return None
 
 
 def _is_unused_qt(destination):
@@ -138,12 +167,13 @@ def _is_unused_qt(destination):
         return True
     if any(marker in text for marker in UNUSED_QT_PLUGINS):
         return True
-    return any(part.split(".")[0] in UNUSED_QT_PARTS for part in parts)
+    return any(_qt_module_name(part) in UNUSED_QT_MODULES for part in parts)
 
 
 _before = len(analysis.binaries) + len(analysis.datas)
 analysis.binaries = [entry for entry in analysis.binaries if not _is_unused_qt(entry[0])]
 analysis.datas = [entry for entry in analysis.datas if not _is_unused_qt(entry[0])]
+print(f"Vendor mitgeliefert: {not skip_vendor and vendor_dir.is_dir()}")
 print(f"Qt-Filter: {_before - len(analysis.binaries) - len(analysis.datas)} Einträge entfernt")
 
 pyz = PYZ(analysis.pure)  # noqa: F821

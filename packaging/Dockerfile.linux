@@ -1,0 +1,59 @@
+# Baut OCRmyPDF GUI für Linux in einer reproduzierbaren Umgebung.
+#
+# Absichtlich Ubuntu 22.04 und nicht die neueste Fassung: Die glibc des
+# Build-Systems bestimmt, ab welcher Distribution das Ergebnis läuft. 22.04
+# bringt glibc 2.35 mit und deckt damit auch Debian 12 und RHEL 9 ab; ein auf
+# 24.04 gebautes Paket liefe auf diesen Systemen nicht.
+#
+# Python 3.12 kommt über deadsnakes dazu, weil OCRmyPDF mindestens 3.11
+# verlangt, Ubuntu 22.04 aber nur 3.10 mitbringt.
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    # appimagetool ist selbst eine AppImage und bräuchte FUSE, das es im
+    # Container nicht gibt. Diese Variable lässt es sich selbst entpacken.
+    APPIMAGE_EXTRACT_AND_RUN=1
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      software-properties-common ca-certificates gnupg dirmngr \
+ && add-apt-repository -y ppa:deadsnakes/ppa \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      # Python samt Werkzeugen zum Bauen
+      python3.12 python3.12-venv python3.12-dev \
+      binutils file wget xz-utils squashfs-tools \
+      # Programme, die mitgeliefert werden
+      tesseract-ocr tesseract-ocr-deu tesseract-ocr-eng tesseract-ocr-osd \
+      ghostscript pngquant patchelf \
+      # Qt braucht diese Bibliotheken; PyInstaller sammelt sie beim Bauen ein
+      libgl1 libegl1 libdbus-1-3 libfontconfig1 libfreetype6 \
+      libxkbcommon0 libxkbcommon-x11-0 \
+      libxcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+      libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-sync1 \
+      libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libx11-xcb1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Bausteine für die AppImage.
+#
+# appimagetool selbst wird bewusst nicht verwendet: Es ist static-pie gelinkt
+# und lässt sich unter der x86-Emulation auf Apple Silicon nicht ausführen
+# ("Exec format error"). Eine AppImage ist aber nichts weiter als ein
+# Squashfs-Abbild hinter einer Startroutine, und beides lässt sich hier direkt
+# erzeugen. build_linux.sh nutzt appimagetool, wenn es läuft, und sonst diesen
+# Weg.
+ARG APPIMAGETOOL_ARCH=x86_64
+RUN wget -q -O /usr/local/share/appimage-runtime \
+      "https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-${APPIMAGETOOL_ARCH}" \
+ && chmod +x /usr/local/share/appimage-runtime
+
+# Eigener Ordner für die virtuelle Umgebung: Das Projektverzeichnis wird vom
+# Wirtssystem eingehängt und enthält dort bereits ein .venv für macOS.
+ENV VENV=/opt/venv-linux \
+    # "python3" ist hier 3.10 aus der Distribution; OCRmyPDF braucht 3.11+.
+    PYTHON_BIN=python3.12
+
+WORKDIR /projekt
+CMD ["./packaging/build_linux.sh", "--vendor", "--appimage"]
