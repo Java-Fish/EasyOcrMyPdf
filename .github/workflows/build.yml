@@ -158,3 +158,51 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "EasyOcrMyPdf ${GITHUB_REF_NAME#v}" \
             --generate-notes
+
+  # Trägt eine neue Version im Homebrew-Tap und bei winget ein. Braucht das
+  # Secret PACKAGING_TOKEN (klassischer Token mit "public_repo"); ohne es wird
+  # der Job übersprungen. Die erste winget-Version muss bereits von Hand
+  # aufgenommen worden sein, danach reicht winget-releaser Updates selbst ein.
+  packages:
+    name: Homebrew and winget
+    needs: release
+    runs-on: ubuntu-24.04
+    env:
+      PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
+      TAP_REPO: ${{ github.repository_owner }}/homebrew-tap
+    steps:
+      - name: Check token
+        id: token
+        run: |
+          if [ -z "$PACKAGING_TOKEN" ]; then
+            echo "::notice::PACKAGING_TOKEN is not set - skipping Homebrew and winget."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update Homebrew cask
+        if: steps.token.outputs.available == 'true'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/EasyOcrMyPdf-macos-arm64.dmg"
+          SHA256="$(curl -fsSL "$URL" | sha256sum | cut -d' ' -f1)"
+          git clone "https://x-access-token:$PACKAGING_TOKEN@github.com/$TAP_REPO.git" tap
+          cd tap
+          sed -i -E \
+            -e "s/^  version \".*\"/  version \"$VERSION\"/" \
+            -e "s/^  sha256 \".*\"/  sha256 \"$SHA256\"/" \
+            Casks/easyocrmypdf.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "easyocrmypdf $VERSION"
+          git push
+
+      - name: Submit to winget
+        if: steps.token.outputs.available == 'true'
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: JavaFish.EasyOcrMyPdf
+          installers-regex: 'windows-x64-Setup\.exe$'
+          fork-user: ${{ github.repository_owner }}
+          token: ${{ secrets.PACKAGING_TOKEN }}

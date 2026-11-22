@@ -44,10 +44,21 @@ haben. Sie brauchen weder Python noch sonst eine Vorinstallation.
 
 1. `EasyOcrMyPdf-macos-arm64.dmg` doppelklicken (für Macs mit Apple-Chip).
 2. Das Symbol **EasyOcrMyPdf** in den Ordner **Programme** ziehen.
-3. Im Ordner **Programme** mit der **rechten Maustaste** auf die App klicken,
-   **Öffnen** wählen und die Rückfrage bestätigen.
-   Dieser eine Umweg ist nötig, weil die App nicht bei Apple registriert ist.
-   Ab dem zweiten Mal genügt ein Doppelklick.
+3. Die App starten. macOS meldet „Apple konnte nicht überprüfen, ob
+   ‚EasyOcrMyPdf' frei von Schadsoftware ist“. Auf **Fertig** klicken.
+4. **Systemeinstellungen → Datenschutz & Sicherheit** öffnen, nach unten
+   blättern und bei der Meldung zu EasyOcrMyPdf auf **Dennoch öffnen** klicken,
+   dann bestätigen.
+   Dieser eine Umweg ist nötig, weil die App nicht bei Apple beglaubigt ist.
+   Ab dem zweiten Mal genügt ein Doppelklick. (Unter macOS 14 und älter genügt
+   stattdessen Rechtsklick auf die App → **Öffnen**.)
+
+Alternativ mit [Homebrew](https://brew.sh/), ebenfalls mit Schritt 3 und 4
+beim ersten Start:
+
+```bash
+brew install --cask java-fish/tap/easyocrmypdf
+```
 
 ### Windows
 
@@ -55,6 +66,12 @@ haben. Sie brauchen weder Python noch sonst eine Vorinstallation.
 2. Meldet SmartScreen „Der Computer wurde durch Windows geschützt“, auf
    **Weitere Informationen** und dann **Trotzdem ausführen** klicken.
 3. Die Anwendung über das Startmenü öffnen.
+
+Alternativ über winget, sobald das Paket dort aufgenommen ist:
+
+```powershell
+winget install JavaFish.EasyOcrMyPdf
+```
 
 Wer nichts installieren möchte, nimmt stattdessen `EasyOcrMyPdf-windows-x64.zip`, entpackt es an
 einen beliebigen Ort und startet darin `EasyOcrMyPdf.exe`.
@@ -349,8 +366,9 @@ Installationsorte des Betriebssystems.
 ## 7. Wenn etwas nicht klappt
 
 **Die Anwendung startet nicht (macOS).**
-Rechtsklick auf das Symbol → *Öffnen* → Nachfrage bestätigen. Siehe
-[Installation](#macos).
+Nach der Meldung „Apple konnte nicht überprüfen …“ in *Systemeinstellungen →
+Datenschutz & Sicherheit* auf *Dennoch öffnen* klicken. Siehe
+[Schnellstart](#macos).
 
 **„Ein benötigtes Hilfsprogramm fehlt“.**
 Tesseract oder Ghostscript wurde nicht gefunden. Der Einrichtungsdialog nennt
@@ -550,6 +568,12 @@ Ein Versions-Tag veröffentlicht zusätzlich ein Release samt `SHA256SUMS.txt`:
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+Danach trägt der Job *Homebrew and winget* die neue Version im
+[Homebrew-Tap](https://github.com/Java-Fish/homebrew-tap) ein und reicht sie
+bei [winget](https://github.com/microsoft/winget-pkgs) ein. Dafür braucht das
+Repository das Secret `PACKAGING_TOKEN`, einen klassischen GitHub-Token mit dem
+Recht `public_repo`. Fehlt es, wird der Job übersprungen.
 
 ### Signierung
 
