@@ -26,7 +26,7 @@ APP_NAME = "EasyOcrMyPdf"
 # Aufruf aus der Shell; dort heißt die Datei deshalb "easyocrmypdf".
 BINARY_NAME = "easyocrmypdf" if IS_LINUX else APP_NAME
 BUNDLE_ID = "de.easyocrmypdf.app"
-VERSION = "0.0.2"
+VERSION = "1.0.0"
 
 # --- Mitgelieferte Dateien ------------------------------------------------
 datas = []

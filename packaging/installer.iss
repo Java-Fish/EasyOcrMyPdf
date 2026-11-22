@@ -8,7 +8,7 @@
 ; (setzt voraus, dass build_windows.ps1 zuvor dist\EasyOcrMyPdf erzeugt hat)
 
 #define AppName "EasyOcrMyPdf"
-#define AppVersion "0.0.2"
+#define AppVersion "1.0.0"
 #define AppPublisher "EasyOcrMyPdf"
 #define AppExeName "EasyOcrMyPdf.exe"
 

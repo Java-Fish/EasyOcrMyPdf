@@ -1,0 +1,160 @@
+# Baut EasyOcrMyPdf für Windows, macOS (Apple Silicon) und Linux (x86_64 und
+# arm64), prüft jedes Paket mit einer echten Texterkennung und hängt die
+# Ergebnisse bei einem Versions-Tag (v1.2.3) an ein GitHub-Release.
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  # Sprachmodelle, die zusätzlich zu Englisch eingebettet werden. Homebrew und
+  # das Windows-Installationsprogramm bringen von sich aus nur Englisch mit.
+  TESSDATA_URL: https://github.com/tesseract-ocr/tessdata_fast/raw/main
+
+jobs:
+  macos:
+    name: macOS (arm64)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Tesseract, Ghostscript and optimisers
+        run: |
+          brew install tesseract ghostscript pngquant jbig2enc
+          curl -fsSL -o "$(brew --prefix)/share/tessdata/deu.traineddata" "$TESSDATA_URL/deu.traineddata"
+
+      - name: Build
+        run: |
+          python -m venv .venv
+          ./packaging/build_macos.sh --vendor --dmg
+
+      - name: Smoke test
+        run: .venv/bin/python tools/smoke_test.py "dist/EasyOcrMyPdf.app/Contents/MacOS/EasyOcrMyPdf"
+
+      - name: Collect artifacts
+        run: |
+          mkdir upload
+          cp dist/EasyOcrMyPdf.dmg upload/EasyOcrMyPdf-macos-arm64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: upload/*
+          if-no-files-found: error
+
+  windows:
+    name: Windows (x64)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Tesseract, Ghostscript and Inno Setup
+        shell: pwsh
+        run: |
+          choco install -y --no-progress tesseract ghostscript innosetup
+          Invoke-WebRequest "$env:TESSDATA_URL/deu.traineddata" `
+            -OutFile "C:\Program Files\Tesseract-OCR\tessdata\deu.traineddata"
+
+      - name: Build
+        shell: pwsh
+        run: .\packaging\build_windows.ps1 -Vendor -Installer
+
+      - name: Smoke test
+        shell: pwsh
+        run: .\.venv\Scripts\python.exe tools\smoke_test.py "dist\EasyOcrMyPdf\EasyOcrMyPdf.exe"
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory upload | Out-Null
+          Copy-Item dist\EasyOcrMyPdf-Setup.exe upload\EasyOcrMyPdf-windows-x64-Setup.exe
+          Compress-Archive -Path dist\EasyOcrMyPdf -DestinationPath upload\EasyOcrMyPdf-windows-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: upload/*
+          if-no-files-found: error
+
+  linux:
+    name: Linux (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Gebaut wird im Container auf Ubuntu 22.04, damit das Ergebnis dank der
+      # älteren glibc auch auf Debian 12 und RHEL 9 läuft.
+      - name: Build the build image
+        run: |
+          docker build --build-arg "APPIMAGETOOL_ARCH=${{ matrix.arch }}" \
+            -f packaging/Dockerfile.linux -t easyocrmypdf-build .
+
+      - name: Build and smoke test
+        run: |
+          docker run --rm -v "$PWD:/projekt" easyocrmypdf-build bash -c '
+            set -e
+            ./packaging/build_linux.sh --vendor --appimage
+            "$VENV/bin/python" tools/smoke_test.py dist/easyocrmypdf/easyocrmypdf
+          '
+
+      - name: Collect artifacts
+        run: |
+          mkdir upload
+          cp dist/EasyOcrMyPdf-linux-${{ matrix.arch }}.tar.gz upload/
+          cp dist/EasyOcrMyPdf-${{ matrix.arch }}.AppImage upload/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: upload/*
+          if-no-files-found: error
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: release
+        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "EasyOcrMyPdf ${GITHUB_REF_NAME#v}" \
+            --generate-notes
